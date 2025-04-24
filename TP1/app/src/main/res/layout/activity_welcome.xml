@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF"
+    android:fillViewport="true">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:layout_gravity="center"
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/tvWelcome"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="¡Bienvenido/a!"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="16dp" />
+
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Seleccione su plataforma:"
+                android:textStyle="bold"
+                android:textSize="15sp"
+                android:layout_marginBottom="6dp" />
+
+            <RadioGroup
+                android:id="@+id/rgPlatform"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="12dp"
+                android:gravity="center">
+
+                <RadioButton
+                    android:id="@+id/rbAndroid"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Android"
+                    android:layout_marginEnd="16dp" />
+
+                <RadioButton
+                    android:id="@+id/rbIOS"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="iOS" />
+            </RadioGroup>
+
+
+            <ImageView
+                android:id="@+id/imgPlatformLogo"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:layout_marginBottom="20dp"
+                android:src="@drawable/techno_logo"
+                android:contentDescription="Logo de la plataforma" />
+
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Seleccione sus preferencias:"
+                android:textStyle="bold"
+                android:textSize="15sp"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="6dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="8dp"
+                android:background="#F5F5F5"
+                android:layout_marginBottom="16dp"
+                android:elevation="1dp"
+                android:clipToPadding="false"
+                android:layout_gravity="center_horizontal">
+
+                <CheckBox
+                    android:id="@+id/cbProgramacion"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Programación"
+                    android:textSize="14sp" />
+
+                <CheckBox
+                    android:id="@+id/cbRedes"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Redes"
+                    android:textSize="14sp" />
+
+                <CheckBox
+                    android:id="@+id/cbSeguridad"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Seguridad"
+                    android:textSize="14sp" />
+
+                <CheckBox
+                    android:id="@+id/cbHardware"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Hardware"
+                    android:textSize="14sp" />
+
+                <CheckBox
+                    android:id="@+id/cbOtra"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Otra"
+                    android:textSize="14sp" />
+
+                <EditText
+                    android:id="@+id/etOtraPreferencia"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Ingrese su preferencia"
+                    android:visibility="gone"
+                    android:layout_marginTop="6dp"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/btnContinuar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Guardar"
+                android:backgroundTint="@color/color1"
+                android:textColor="@color/color5"
+                android:padding="10dp"
+                android:textStyle="bold"
+                android:elevation="3dp"
+                android:layout_marginTop="8dp" />
+
+
+            <Button
+                android:id="@+id/btnCerrarSesion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Cerrar Sesión"
+                android:backgroundTint="@color/color2"
+                android:textColor="@color/color5"
+                android:padding="10dp"
+                android:textStyle="bold"
+                android:elevation="3dp"
+                android:layout_marginTop="16dp" />
+
+        </LinearLayout>
+    </FrameLayout>
+</ScrollView>
