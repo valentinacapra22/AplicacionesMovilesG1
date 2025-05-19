@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Grupo1</string>
+    <string name="number_game">Juego de Números</string>
+    <string name="capitals_manager">Gestor de Capitales</string>
+</resources>
