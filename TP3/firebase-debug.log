@@ -1,0 +1,68 @@
+[debug] [2025-06-14T17:13:47.338Z] ----------------------------------------------------------------------
+[debug] [2025-06-14T17:13:47.342Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\Usuario\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js init
+[debug] [2025-06-14T17:13:47.343Z] CLI Version:   14.7.0
+[debug] [2025-06-14T17:13:47.343Z] Platform:      win32
+[debug] [2025-06-14T17:13:47.343Z] Node Version:  v22.16.0
+[debug] [2025-06-14T17:13:47.344Z] Time:          Sat Jun 14 2025 14:13:47 GMT-0300 (hora estándar de Argentina)
+[debug] [2025-06-14T17:13:47.344Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-06-14T17:13:47.355Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T17:13:47.356Z] > authorizing via signed-in user (magaliransan.mr@gmail.com)
+[info] 
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  C:\Users\Usuario\OneDrive - UTN FRLP\4to año\Materias Electivas\Aplicaciones Móviles\Trabajo Práctico\AppMoviles
+
+[debug] [2025-06-14T17:19:26.250Z] ExitPromptError: User force closed the prompt with SIGINT
+    at Interface.sigint (C:\Users\Usuario\AppData\Roaming\npm\node_modules\firebase-tools\node_modules\@inquirer\core\dist\commonjs\lib\create-prompt.js:101:37)
+    at Interface.emit (node:events:518:28)
+    at Interface.emit (node:domain:489:12)
+    at [_ttyWrite] [as _ttyWrite] (node:internal/readline/interface:1128:18)
+    at ReadStream.onkeypress (node:internal/readline/interface:267:20)
+    at ReadStream.emit (node:events:530:35)
+    at ReadStream.emit (node:domain:489:12)
+    at emitKeys (node:internal/readline/utils:370:14)
+    at emitKeys.next (<anonymous>)
+    at ReadStream.onData (node:internal/readline/emitKeypressEvents:64:36)
+[error] 
+[error] Error: An unexpected error has occurred.
+[debug] [2025-06-14T17:19:35.248Z] ----------------------------------------------------------------------
+[debug] [2025-06-14T17:19:35.255Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\Usuario\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js init
+[debug] [2025-06-14T17:19:35.256Z] CLI Version:   14.7.0
+[debug] [2025-06-14T17:19:35.256Z] Platform:      win32
+[debug] [2025-06-14T17:19:35.257Z] Node Version:  v22.16.0
+[debug] [2025-06-14T17:19:35.257Z] Time:          Sat Jun 14 2025 14:19:35 GMT-0300 (hora estándar de Argentina)
+[debug] [2025-06-14T17:19:35.257Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-06-14T17:19:35.269Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T17:19:35.270Z] > authorizing via signed-in user (magaliransan.mr@gmail.com)
+[info] 
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  C:\Users\Usuario\OneDrive - UTN FRLP\4to año\Materias Electivas\Aplicaciones Móviles\Trabajo Práctico\AppMoviles
+
+[debug] [2025-06-14T17:34:04.262Z] ExitPromptError: User force closed the prompt with SIGINT
+    at Interface.sigint (C:\Users\Usuario\AppData\Roaming\npm\node_modules\firebase-tools\node_modules\@inquirer\core\dist\commonjs\lib\create-prompt.js:101:37)
+    at Interface.emit (node:events:518:28)
+    at Interface.emit (node:domain:489:12)
+    at [_ttyWrite] [as _ttyWrite] (node:internal/readline/interface:1128:18)
+    at ReadStream.onkeypress (node:internal/readline/interface:267:20)
+    at ReadStream.emit (node:events:530:35)
+    at ReadStream.emit (node:domain:489:12)
+    at emitKeys (node:internal/readline/utils:370:14)
+    at emitKeys.next (<anonymous>)
+    at ReadStream.onData (node:internal/readline/emitKeypressEvents:64:36)
+[error] 
+[error] Error: An unexpected error has occurred.
