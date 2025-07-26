@@ -47,6 +47,7 @@ import { Ionicons } from "@expo/vector-icons";
 import AlertScreen from "../screen/AlertScreen";
 import ProfileScreen from "../screen/ProfileScreen";
 import HistoryScreen from "../screen/HistoryScreen";
+import StatisticsScreen from "../screen/StatisticsScreen";
 import { THEME } from "../theme/theme";
 
 const Tab = createBottomTabNavigator();
@@ -79,6 +80,7 @@ export default function MainTabNavigator() {
       })}
     >
       <Tab.Screen name="Alertas" component={AlertScreen} />
+      <Tab.Screen name="Estadísticas" component={StatisticsScreen} />
       <Tab.Screen name="Historial" component={HistoryScreen} />
       <Tab.Screen name="Perfil" component={ProfileScreen} />
     </Tab.Navigator>

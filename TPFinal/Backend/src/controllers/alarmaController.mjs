@@ -12,12 +12,11 @@ export const activarAlarma = catchAsync(async (req, res, io) => {
   try {
     const { alarma, usuariosDelVecindario } = await alarmaService.activarAlarma(usuarioId, descripcion, tipo);
 
-  
     if (usuariosDelVecindario && usuariosDelVecindario.length > 0) {
       usuariosDelVecindario.forEach((usuario) => {
-        if (usuario.usuarioid !== usuarioId) {  // No enviar al emisor
-          console.log(`Emitiendo alarma a usuario ${usuario.usuarioid} del vecindario ${usuario.vecindarioid}`);
-          io.to(`user_${usuario.usuarioid}`).emit("nuevaAlarma", {
+        if (usuario.usuarioId !== usuarioId) {  // No enviar al emisor
+          console.log(`Emitiendo alarma a usuario ${usuario.usuarioId} del vecindario`);
+          io.to(`user_${usuario.usuarioId}`).emit("nuevaAlarma", {
             mensaje: "¡Alarma activada en tu vecindario!",
             alarma: {
               ...alarma,
@@ -62,4 +61,20 @@ export const deleteAlarma = catchAsync(async (req, res) => {
 
   await alarmaService.deleteAlarma(req.params.id);
   res.status(204).json({ message: "Alarma eliminada" });
+});
+
+export const getEstadisticasVecindario = catchAsync(async (req, res) => {
+  const { vecindarioId } = req.params;
+  
+  if (!vecindarioId) {
+    return res.status(400).json({ error: "ID de vecindario requerido" });
+  }
+
+  try {
+    const estadisticas = await alarmaService.getEstadisticasPorVecindario(vecindarioId);
+    res.status(200).json(estadisticas);
+  } catch (error) {
+    console.error("Error al obtener estadísticas:", error);
+    res.status(500).json({ error: "Error al obtener las estadísticas" });
+  }
 });
