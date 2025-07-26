@@ -25,5 +25,5 @@ La interfaz de usuario se complementa con @expo/vector-icons para íconos listos
 
 Base de datos a incorporar en el archivo .env en la raiz del proyecto
 ```bash
-DATABASE_URL="postgresql://postgres:tallersoft600@colosal.duckdns.org:14998/S31-viginet?schema=public"
+DATABASE_URL="postgresql://postgres:kYwSTQSRIMMRkvwJkKuaigQZgjnJriZN@switchback.proxy.rlwy.net:52691/railway"
 ```
