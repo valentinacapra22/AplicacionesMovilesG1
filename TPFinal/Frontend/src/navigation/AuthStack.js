@@ -1,7 +1,7 @@
 import React from "react";
 import { createStackNavigator } from "@react-navigation/stack";
-import SplashScreen from "../screen/SplashScreen"; // Ensure this path is correct
-import LoginScreen from "../screen/LoginScreen"; // Your unified login screen
+import SplashScreen from "../screen/SplashScreen"; 
+import LoginScreen from "../screen/LoginScreen";
 import RegisterScreen from "../screen/RegisterScreen";
 import RegisterDetailsScreen from "../screen/RegisterDetailsScreen";
 import { THEME } from "../theme/theme";
@@ -11,7 +11,7 @@ const Stack = createStackNavigator();
 export default function AuthStack() {
   return (
     <Stack.Navigator
-      initialRouteName="Splash" // This ensures the app starts on the SplashScreen
+      initialRouteName="Splash" 
       screenOptions={{
         headerStyle: THEME.headerStyle,
         headerTitleStyle: THEME.headerTitleStyle,
