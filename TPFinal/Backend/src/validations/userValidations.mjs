@@ -1,4 +1,3 @@
-// src/validations/userValidations.mjs
 import { z } from 'zod';
 
 export const registerSchema = z.object({

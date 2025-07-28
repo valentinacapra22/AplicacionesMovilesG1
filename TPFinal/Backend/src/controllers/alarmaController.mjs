@@ -15,7 +15,7 @@ export const activarAlarma = catchAsync(async (req, res, io) => {
   
     if (usuariosDelVecindario && usuariosDelVecindario.length > 0) {
       usuariosDelVecindario.forEach((usuario) => {
-        if (usuario.usuarioid !== usuarioId) {  // No enviar al emisor
+        if (usuario.usuarioid !== usuarioId) { 
           console.log(`Emitiendo alarma a usuario ${usuario.usuarioid} del vecindario ${usuario.vecindarioid}`);
           io.to(`user_${usuario.usuarioid}`).emit("nuevaAlarma", {
             mensaje: "¡Alarma activada en tu vecindario!",

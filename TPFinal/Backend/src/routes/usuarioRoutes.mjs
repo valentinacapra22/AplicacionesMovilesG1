@@ -1,4 +1,3 @@
-// src/routes/usuarioRoutes.mjs
 import express from 'express';
 import * as usuarioController from '../controllers/usuarioController.mjs';
 

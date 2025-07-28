@@ -1,30 +1,18 @@
 import http from 'http';
 import app from './src/app.mjs';
-import { Server } from 'socket.io';  // Cambié la importación aquí
+import { Server } from 'socket.io'; 
 
-const server = http.createServer(app);  // Crear un servidor HTTP usando Express
-const io = new Server(server);  // Usar new Server en lugar de socketIo
+const server = http.createServer(app); 
+const io = new Server(server);  
 
-const connectedClients = new Map(); // Usamos un Map para almacenar clientes
-
+const connectedClients = new Map(); 
 io.on('connection', (socket) => {
   console.log(`🔌 Usuario conectado: ${socket.id}`);
-
-  // Agregar usuario al Map
   connectedClients.set(socket.id, { id: socket.id });
-
-  // Notificar a todos los clientes sobre la actualización
   io.emit('update-clients', Array.from(connectedClients.values()));
-
   socket.on('unirseAlVecindario', (message) => {
     console.log(`📩 Mensaje recibido: ${message}`);
-
-
-
-
     socket.join(message);
-
-
     const rooms = Array.from(socket.rooms);
     console.log("aaa", rooms);
   });
@@ -41,17 +29,12 @@ io.on('connection', (socket) => {
   }
   );
 
-
-  // Manejo de desconexión
   socket.on('disconnect', () => {
     console.log(`❌ Usuario desconectado: ${socket.id}`);
     connectedClients.delete(socket.id);
-
-    // Notificar a los clientes sobre la actualización
     io.emit('update-clients', Array.from(connectedClients.values()));
   });
 
-  // Evento para solicitar la lista de clientes conectados
   socket.on('get-clients', () => {
     socket.emit('update-clients', Array.from(connectedClients.values()));
   });
