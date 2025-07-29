@@ -41,7 +41,6 @@ export const activarAlarma = async (usuarioId, descripcion, tipo) => {
     return { alarma, usuariosDelVecindario };
 };
 
-// Obtener todas las alarmas
 export const getAllAlarmas = async () => {
     return await prisma.alarma.findMany({
         include: { 
@@ -58,7 +57,6 @@ export const getAllAlarmasByVecindario = async (vecindarioId) => {
     });
 }
 
-// Obtener una alarma por ID
 export const getAlarmaById = async (id) => {
     const alarmaId = parseInt(id);
     if (isNaN(alarmaId)) throw new Error("ID de alarma inválido");
@@ -69,7 +67,6 @@ export const getAlarmaById = async (id) => {
     });
 };
 
-// Crear una nueva alarma
 export const createAlarma = async (data) => {
     const { activo, fechaHora, tipo, usuarioId } = data;
 
@@ -89,7 +86,6 @@ export const createAlarma = async (data) => {
     });
 };
 
-// Actualizar una alarma existente
 export const updateAlarma = async (id, data) => {
     const alarmaId = parseInt(id);
     if (isNaN(alarmaId)) throw new Error("ID de alarma inválido");
@@ -106,7 +102,6 @@ export const updateAlarma = async (id, data) => {
     });
 };
 
-// Eliminar una alarma por ID
 export const deleteAlarma = async (id) => {
     const alarmaId = parseInt(id);
     if (isNaN(alarmaId)) throw new Error("ID de alarma inválido");

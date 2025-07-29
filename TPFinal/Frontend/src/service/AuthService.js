@@ -2,7 +2,6 @@ import axios from 'axios';
 
 const BASE_URL = "http://localhost:3000/api";
 
-// authService.js
 const login = async (email, password) => {
   try {
     const response = await axios.post(`${BASE_URL}/auth/login`, {
@@ -10,7 +9,6 @@ const login = async (email, password) => {
       contrasena: password,
     });
 
-    // Almacenar token en localStorage
     if (response.data.token) {
       localStorage.setItem('userToken', response.data.token);
       localStorage.setItem('userData', JSON.stringify(response.data.user));

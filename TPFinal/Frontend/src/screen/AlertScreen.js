@@ -123,15 +123,15 @@ export default function AlertScreen() {
         usuarioId: userId,
       });
 
-      const alarmaId = alarmaResponse.data.alarma.alarmaId;
 
-      // Guardar la ubicación
+      const alarmaId = alarmaResponse.data.alarma.alarmaId;
       const ubicacionResponse = await axios.post(`${BASE_URL}/ubicaciones`, {
         usuarioId: userId,
         alarmaId,
         latitud: location.latitude,
         longitud: location.longitude,
       });
+
 
       console.log('✅ Alarma y ubicación guardadas:', {
         alarma: alarmaResponse.data,

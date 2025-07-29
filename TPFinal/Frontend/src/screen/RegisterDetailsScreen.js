@@ -17,7 +17,6 @@ import { Picker } from "@react-native-picker/picker";
 import axios from "axios";
 import { FontAwesome } from "@expo/vector-icons";
 
-// URL de la API
 const BASE_URL = "http://localhost:3000/Api";
 
 export default function RegisterDetailsScreen({ navigation, route }) {
@@ -42,7 +41,6 @@ export default function RegisterDetailsScreen({ navigation, route }) {
   const [showPicker, setShowPicker] = useState(false);
   const [error, setError] = useState("");
   
-  // Refs para navegación entre inputs
   const refApellido = useRef(null);
   const refContrasena = useRef(null);
   const refConfirmarContrasena = useRef(null);
@@ -78,13 +76,11 @@ export default function RegisterDetailsScreen({ navigation, route }) {
 
   const handleRegister = async () => {
     try {
-      // Verificar que las contraseñas coincidan
       if (formData.contrasena !== formData.confirmarContrasena) {
         setError("Las contraseñas no coinciden.");
         return;
       }
 
-      // Verificar que la contraseña cumpla con los requisitos
       const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/;
       if (!passwordRegex.test(formData.contrasena)) {
         setError(
@@ -93,10 +89,8 @@ export default function RegisterDetailsScreen({ navigation, route }) {
         return;
       }
 
-      // Limpiar errores previos
       setError("");
 
-      // Verificar campos requeridos (piso y depto son opcionales)
       if (
         !formData.nombre ||
         !formData.apellido ||
@@ -133,7 +127,6 @@ export default function RegisterDetailsScreen({ navigation, route }) {
     }
   };
 
-  // Cálculos para estilos
   const getInputWidth = () => (width < 400 ? width * 0.9 : width * 0.85);
   const getButtonWidth = () => (width < 400 ? width * 0.7 : width * 0.5);
   const getFontSize = () => (width < 400 ? 16 : 18);

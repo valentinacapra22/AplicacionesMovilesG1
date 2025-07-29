@@ -70,10 +70,10 @@ export default function ProfileScreen({ navigation }) {
 
   const formatLabel = (label) => {
     return label
-      .replace(/_/g, " ") // Replace underscores with spaces
-      .replace(/calle1/i, "Calle 1") // Format 'calle1'
-      .replace(/calle2/i, "Calle 2") // Format 'calle2'
-      .replace(/\b\w/g, (char) => char.toUpperCase()); // Capitalize words
+      .replace(/_/g, " ") 
+      .replace(/calle1/i, "Calle 1") 
+      .replace(/calle2/i, "Calle 2") 
+      .replace(/\b\w/g, (char) => char.toUpperCase()); 
   };
 
   if (loading) {
@@ -107,12 +107,12 @@ export default function ProfileScreen({ navigation }) {
         </View>
       )}
 
-      {/* Logout Button */}
+      {}
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Text style={styles.logoutText}>Cerrar Sesión</Text>
       </TouchableOpacity>
 
-      {/* Logout Confirmation Modal */}
+      {}
       <Modal
         visible={isLogoutModalVisible}
         transparent={true}

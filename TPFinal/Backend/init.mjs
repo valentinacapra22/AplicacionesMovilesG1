@@ -14,12 +14,10 @@ const io = new Server(server, {
 const usuariosPorVecindario = new Map();
 const connectedClients = new Map();
 
+const connectedClients = new Map(); 
 io.on('connection', (socket) => {
   console.log(`🔌 Usuario conectado: ${socket.id}`);
-
-  // Agregar usuario al Map
   connectedClients.set(socket.id, { id: socket.id });
-
   // Evento para identificar usuario y unirlo a su vecindario
   socket.on('identificarUsuario', ({ userId, vecindarioId }) => {
     console.log(`👤 Usuario ${userId} identificado, uniéndose al vecindario ${vecindarioId}`);
@@ -105,10 +103,10 @@ io.on('connection', (socket) => {
     }
 
     // Notificar a los clientes sobre la actualización
+
     io.emit('update-clients', Array.from(connectedClients.values()));
   });
 
-  // Evento para solicitar la lista de clientes conectados
   socket.on('get-clients', () => {
     socket.emit('update-clients', Array.from(connectedClients.values()));
   });
