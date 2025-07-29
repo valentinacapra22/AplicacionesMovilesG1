@@ -1,194 +1,179 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
-  ActivityIndicator,
-  Platform,
-  Linking,
   TouchableOpacity,
-} from "react-native";
-import { useIsFocused } from "@react-navigation/native";
-import axios from "axios";
-import { useAuth } from "../context/AuthContext";
-
-const BASE_URL = "http://localhost:3000/api";
-const ALERTS_API = `${BASE_URL}/alarmas`;
-const USER_API = `${BASE_URL}/usuarios`;
-
-const formatDate = (dateString) => {
-  try {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) {
-      return "Fecha no disponible";
-    }
-    return date.toLocaleString("es-ES", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    });
-  } catch (error) {
-    console.error("Error formatting date:", error);
-    return "Fecha no disponible";
-  }
-};
+  RefreshControl,
+  Alert,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useNotification } from '../context/NotificationContext';
+import { useAuth } from '../context/AuthContext';
 
 export default function HistoryScreen() {
-  const [alerts, setAlerts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { notificationHistory, clearHistory, getNotificationsByType } = useNotification();
   const { authData } = useAuth();
-  const isFocused = useIsFocused();
+  const [refreshing, setRefreshing] = useState(false);
+  const [filter, setFilter] = useState('all'); // 'all', 'alarm', 'info'
 
-  useEffect(() => {
-    if (isFocused) {
-      fetchAlerts();
-    }
-  }, [isFocused]);
-
-  const fetchAlerts = async () => {
-    try {
-      setError(null);
-      setLoading(true);
-      
-      const token = localStorage.getItem("userToken") || authData?.token;
-      const userId = localStorage.getItem("userId") || authData?.userId;
-      
-      if (!token || !userId) {
-        setError("No se encontró información de autenticación");
-        setLoading(false);
-        return;
-      }
-      
-      const userResponse = await axios.get(`${USER_API}/${userId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-      
-      console.log("User data:", JSON.stringify(userResponse.data, null, 2));
-      
-      const userVecindarioId = userResponse.data.vecindarioId;
-      if (!userVecindarioId) {
-        setError("No se pudo determinar el vecindario del usuario");
-        setLoading(false);
-        return;
-      }
-      const response = await axios.get(ALERTS_API, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-      
-      const allAlerts = Array.isArray(response.data) ? response.data : [];
-      console.log(`Total alerts fetched: ${allAlerts.length}`);
-      const neighborhoodAlerts = allAlerts.filter(alert => {
-        return alert.usuario && alert.usuario.vecindarioId === userVecindarioId;
-      });
-      
-      console.log(`Filtered alerts: ${neighborhoodAlerts.length} of ${allAlerts.length}`);
-      
-      const sortedAlerts = neighborhoodAlerts.sort(
-        (a, b) => new Date(b.fechaHora) - new Date(a.fechaHora)
-      );
-      
-      setAlerts(sortedAlerts);
-    } catch (error) {
-      console.error("Error fetching alerts:", error.response || error);
-      setError(`Error al cargar las alertas: ${error.message}`);
-    } finally {
-      setLoading(false);
-    }
+  const onRefresh = () => {
+    setRefreshing(true);
+    // Simular refresh
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1000);
   };
 
-  const handleOpenMap = (latitud, longitud) => {
-    const url = `https://www.google.com/maps/search/?api=1&query=${latitud},${longitud}`;
-    Linking.openURL(url).catch((err) =>
-      console.error("Error opening Google Maps:", err)
+  const handleClearHistory = () => {
+    Alert.alert(
+      'Limpiar Historial',
+      '¿Estás seguro de que quieres eliminar todo el historial de notificaciones?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { 
+          text: 'Limpiar', 
+          style: 'destructive',
+          onPress: () => clearHistory()
+        },
+      ]
     );
   };
 
-  const renderAlertItem = ({ item }) => {
-    return (
-      <View style={styles.alertItem}>
-        <Text style={styles.alertType}>{item.tipo}</Text>
-        {item.descripcion && (
-          <Text style={styles.alertDescription}>{item.descripcion}</Text>
-        )}
-        <Text style={styles.alertDate}>{formatDate(item.fechaHora)}</Text>
-        <Text
-          style={[
-            styles.alertStatus,
-            { color: item.activo ? "#4CAF50" : "#FF5722" },
-          ]}
-        >
-          {item.activo ? "Activa" : "Inactiva"}
+  const getFilteredNotifications = () => {
+    if (filter === 'all') {
+      return notificationHistory;
+    }
+    return getNotificationsByType(filter);
+  };
+
+  const getNotificationIcon = (type) => {
+    switch (type) {
+      case 'alarm':
+        return '🚨';
+      case 'success':
+        return '✅';
+      case 'warning':
+        return '⚠️';
+      default:
+        return '📢';
+    }
+  };
+
+  const getNotificationColor = (type) => {
+    switch (type) {
+      case 'alarm':
+        return '#dc3545';
+      case 'success':
+        return '#28a745';
+      case 'warning':
+        return '#ffc107';
+      default:
+        return '#007bff';
+    }
+  };
+
+  const formatTime = (timestamp) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffInMinutes = Math.floor((now - date) / (1000 * 60));
+    
+    if (diffInMinutes < 1) return 'Ahora';
+    if (diffInMinutes < 60) return `Hace ${diffInMinutes} min`;
+    if (diffInMinutes < 1440) return `Hace ${Math.floor(diffInMinutes / 60)}h`;
+    return date.toLocaleDateString();
+  };
+
+  const renderNotification = ({ item }) => (
+    <View style={[
+      styles.notificationItem,
+      { borderLeftColor: getNotificationColor(item.type) }
+    ]}>
+      <View style={styles.notificationHeader}>
+        <Text style={styles.notificationIcon}>
+          {getNotificationIcon(item.type)}
         </Text>
-        {item.ubicaciones && item.ubicaciones.length > 0 ? (
-          <TouchableOpacity
-            style={styles.mapButton}
-            onPress={() =>
-              handleOpenMap(
-                item.ubicaciones[0].latitud,
-                item.ubicaciones[0].longitud
-              )
-            }
-          >
-            <Text style={styles.mapButtonText}>Ver en Mapa</Text>
-          </TouchableOpacity>
-        ) : (
-          <Text style={styles.noLocationText}>No hay ubicación disponible</Text>
-        )}
+        <View style={styles.notificationInfo}>
+          <Text style={styles.notificationTitle}>{item.title}</Text>
+          <Text style={styles.notificationTime}>
+            {formatTime(item.timestamp)}
+          </Text>
+        </View>
       </View>
-    );
-  };
-  
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0D99FF" />
-      </View>
-    );
-  }
+      <Text style={styles.notificationMessage}>{item.message}</Text>
+    </View>
+  );
 
-  if (error) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity 
-          style={styles.retryButton} 
-          onPress={fetchAlerts}
-        >
-          <Text style={styles.retryButtonText}>Reintentar</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
+  const renderFilterButton = (filterType, label, icon) => (
+    <TouchableOpacity
+      style={[
+        styles.filterButton,
+        filter === filterType && styles.filterButtonActive
+      ]}
+      onPress={() => setFilter(filterType)}
+    >
+      <Ionicons 
+        name={icon} 
+        size={16} 
+        color={filter === filterType ? '#fff' : '#666'} 
+      />
+      <Text style={[
+        styles.filterButtonText,
+        filter === filterType && styles.filterButtonTextActive
+      ]}>
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Alertas del Vecindario</Text>
-      {alerts.length > 0 ? (
-        <FlatList
-          data={alerts}
-          renderItem={renderAlertItem}
-          keyExtractor={(item, index) => item.alarmaId?.toString() || index.toString()}
-          contentContainerStyle={styles.listContainer}
-          onRefresh={fetchAlerts}
-          refreshing={loading}
-        />
-      ) : (
-        <View style={styles.emptyStateContainer}>
-          <Text style={styles.noAlertsText}>No hay alertas en tu vecindario.</Text>
-          <Text style={styles.noAlertsSubtext}>Las alertas de tu vecindario aparecerán aquí.</Text>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>📋 Historial de Notificaciones</Text>
+        <TouchableOpacity onPress={handleClearHistory} style={styles.clearButton}>
+          <Ionicons name="trash-outline" size={20} color="#dc3545" />
+          <Text style={styles.clearButtonText}>Limpiar</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.filterContainer}>
+        {renderFilterButton('all', 'Todas', 'list')}
+        {renderFilterButton('alarm', 'Alarmas', 'warning')}
+        {renderFilterButton('info', 'Info', 'information-circle')}
+      </View>
+
+      {getFilteredNotifications().length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Ionicons name="notifications-off" size={64} color="#ccc" />
+          <Text style={styles.emptyText}>
+            {filter === 'all' 
+              ? 'No hay notificaciones en el historial'
+              : `No hay notificaciones de tipo "${filter}"`
+            }
+          </Text>
         </View>
+      ) : (
+        <FlatList
+          data={getFilteredNotifications()}
+          renderItem={renderNotification}
+          keyExtractor={(item) => item.id.toString()}
+          style={styles.notificationsList}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+          showsVerticalScrollIndicator={false}
+        />
       )}
+
+      <View style={styles.statsContainer}>
+        <Text style={styles.statsText}>
+          Total: {notificationHistory.length} notificaciones
+        </Text>
+        <Text style={styles.statsText}>
+          Alarmas: {getNotificationsByType('alarm').length}
+        </Text>
+      </View>
     </View>
   );
 }
@@ -196,110 +181,130 @@ export default function HistoryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: '#f8f9fa',
   },
-  loadingContainer: {
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e9ecef',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#2c3e50',
+  },
+  clearButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 8,
+  },
+  clearButtonText: {
+    marginLeft: 4,
+    color: '#dc3545',
+    fontSize: 14,
+  },
+  filterContainer: {
+    flexDirection: 'row',
+    padding: 15,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e9ecef',
+  },
+  filterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginRight: 10,
+    borderRadius: 20,
+    backgroundColor: '#f8f9fa',
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+  },
+  filterButtonActive: {
+    backgroundColor: '#007bff',
+    borderColor: '#007bff',
+  },
+  filterButtonText: {
+    marginLeft: 4,
+    fontSize: 12,
+    color: '#666',
+  },
+  filterButtonTextActive: {
+    color: '#fff',
+  },
+  notificationsList: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 16,
-    color: "#333",
+  notificationItem: {
+    backgroundColor: '#fff',
+    marginHorizontal: 15,
+    marginVertical: 5,
+    padding: 15,
+    borderRadius: 10,
+    borderLeftWidth: 4,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  listContainer: {
-    flexGrow: 1,
-  },
-  alertItem: {
-    backgroundColor: "white",
-    padding: 16,
+  notificationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 8,
-    borderRadius: 8,
-    ...Platform.select({
-      web: {
-        boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
-      },
-      default: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.2,
-        shadowRadius: 2,
-        elevation: 2,
-      },
-    }),
   },
-  alertType: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#0D99FF",
+  notificationIcon: {
+    fontSize: 20,
+    marginRight: 10,
   },
-  alertDescription: {
-    fontSize: 16,
-    color: "#333",
-    marginTop: 4,
-  },
-  alertDate: {
-    fontSize: 14,
-    color: "#666",
-    marginTop: 4,
-  },
-  alertStatus: {
-    fontSize: 14,
-    marginTop: 4,
-    fontWeight: "500",
-  },
-  noAlertsText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#666",
-    textAlign: "center",
-  },
-  noAlertsSubtext: {
-    fontSize: 14,
-    color: "#999",
-    textAlign: "center",
-    marginTop: 8,
-  },
-  emptyStateContainer: {
+  notificationInfo: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
   },
-  errorText: {
+  notificationTitle: {
     fontSize: 16,
-    color: "#ff4444",
-    textAlign: "center",
-    marginTop: 20,
+    fontWeight: '600',
+    color: '#2c3e50',
+    marginBottom: 2,
   },
-  mapButton: {
-    marginTop: 10,
-    backgroundColor: "#0D99FF",
-    padding: 10,
-    borderRadius: 5,
-    alignItems: "center",
+  notificationTime: {
+    fontSize: 12,
+    color: '#6c757d',
   },
-  mapButtonText: {
-    color: "white",
-    fontWeight: "bold",
+  notificationMessage: {
+    fontSize: 14,
+    color: '#495057',
+    lineHeight: 20,
   },
-  noLocationText: {
-    marginTop: 10,
-    color: "#666",
-    fontStyle: "italic",
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
   },
-  retryButton: {
-    backgroundColor: "#0D99FF",
-    padding: 10,
-    borderRadius: 5,
-    alignItems: "center",
-    marginTop: 10,
-    alignSelf: "center",
+  emptyText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#6c757d',
+    textAlign: 'center',
   },
-  retryButtonText: {
-    color: "white",
-    fontWeight: "bold",
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 15,
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#e9ecef',
+  },
+  statsText: {
+    fontSize: 12,
+    color: '#6c757d',
   },
 });

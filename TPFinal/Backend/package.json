@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "dev": "node --watch init.mjs"
+    "dev": "node init.mjs"
   },
   "dependencies": {
     "@prisma/client": "6.3.1",
