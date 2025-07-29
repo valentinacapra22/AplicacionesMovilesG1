@@ -1,4 +1,5 @@
 // src/app.mjs
+import dotenv from 'dotenv';
 import express from "express";
 import vecindarioRoutes from "./routes/vecindarioRoutes.mjs";
 import alarmaRoutes from "./routes/alarmaRoutes.mjs";
@@ -12,6 +13,8 @@ import globalErrorHandler from "./middleware/globalErrorHandler.mjs";
 import ubicacionRoutes from "./routes/ubicacionRoutes.mjs";
 import historialNotificacionesRoutes from "./routes/historialNotificacionesRoutes.mjs";
 
+// Cargar variables de entorno
+dotenv.config();
 const app = express();
 
 // Middlewares

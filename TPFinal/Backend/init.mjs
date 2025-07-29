@@ -1,7 +1,10 @@
 import http from 'http';
 import app from './src/app.mjs';
 import { Server } from 'socket.io';
+import dotenv from 'dotenv';
 
+// Cargar variables de entorno
+dotenv.config();
 
 const server = http.createServer(app);
 const io = new Server(server, {
