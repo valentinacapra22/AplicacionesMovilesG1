@@ -2,6 +2,19 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+// Obtener usuario por ID
+export const getUsuarioById = async (usuarioId) => {
+    return await prisma.usuario.findUnique({
+        where: { usuarioId: parseInt(usuarioId) },
+        select: { 
+            usuarioId: true, 
+            nombre: true, 
+            apellido: true, 
+            vecindarioId: true 
+        },
+    });
+};
+
 // Activar una alarma y notificar a los usuarios del mismo vecindario
 export const activarAlarma = async (usuarioId, descripcion, tipo) => {
     const usuario = await prisma.usuario.findUnique({

@@ -1,5 +1,6 @@
 // src/services/notificacionService.mjs
 import { PrismaClient } from '@prisma/client';
+import { io } from '../../init.mjs';
 
 const prisma = new PrismaClient();
 
@@ -21,8 +22,18 @@ export const createNotificacion = async (data) => {
         throw new Error('Todos los campos (titulo, notificacion, contenido, tipo, fechaHora, usuarioId) son obligatorios');
     }
 
+    // Obtener información del usuario para el vecindario
+    const usuario = await prisma.usuario.findUnique({
+        where: { usuarioId: parseInt(usuarioId) },
+        select: { vecindarioId: true, nombre: true, apellido: true }
+    });
+
+    if (!usuario) {
+        throw new Error('Usuario no encontrado');
+    }
+
     // Crear la notificación
-    return await prisma.notificacion.create({
+    const nuevaNotificacion = await prisma.notificacion.create({
         data: {
             titulo,
             notificacion,
@@ -30,7 +41,29 @@ export const createNotificacion = async (data) => {
             tipo,
             usuarioId: parseInt(usuarioId),
         },
+        include: {
+            usuario: {
+                select: { nombre: true, apellido: true }
+            }
+        }
     });
+
+    // Enviar notificación por socket a todos los usuarios del vecindario
+    const notificacionSocket = {
+        mensaje: contenido,
+        tipo: tipo,
+        emisor: `${usuario.nombre} ${usuario.apellido}`,
+        timestamp: new Date().toISOString(),
+        vecindarioId: usuario.vecindarioId,
+        titulo: titulo
+    };
+
+    // Enviar a todos los usuarios del vecindario
+    io.to(`vecindario_${usuario.vecindarioId}`).emit('notificacion', notificacionSocket);
+    
+    console.log(`📢 Notificación enviada al vecindario ${usuario.vecindarioId}: ${titulo}`);
+
+    return nuevaNotificacion;
 };
 
 export const updateNotificacion = async (id, data) => {
