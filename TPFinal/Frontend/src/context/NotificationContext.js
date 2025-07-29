@@ -47,23 +47,12 @@ export const NotificationProvider = ({ children }) => {
     });
   };
 
-  // Función para mostrar notificación de alarma
-  const showAlarmNotification = (alarmData) => {
-    const { emisor, mensaje, tipo } = alarmData;
-    showNotification(
-      `🚨 Alarma de ${tipo}`,
-      `${mensaje} - Reportado por: ${emisor}`,
-      'alarm',
-      alarmData
-    );
-  };
-
   // Función para mostrar notificación general
   const showGeneralNotification = (notificationData) => {
     const { titulo, mensaje, emisor, tipo } = notificationData;
     showNotification(
       titulo || 'Notificación',
-      `${mensaje} - ${emisor ? `Por: ${emisor}` : ''}`,
+      `${mensaje} ${emisor ? `- Por: ${emisor}` : ''}`,
       tipo || 'info',
       notificationData
     );
@@ -71,12 +60,6 @@ export const NotificationProvider = ({ children }) => {
 
   // Configurar listeners de socket
   useEffect(() => {
-    // Listener para nuevas alarmas
-    socket.on('nuevaAlarma', (alarmData) => {
-      console.log('🚨 Nueva alarma recibida:', alarmData);
-      showAlarmNotification(alarmData);
-    });
-
     // Listener para notificaciones generales
     socket.on('notificacion', (notificationData) => {
       console.log('📢 Notificación recibida:', notificationData);
@@ -84,7 +67,6 @@ export const NotificationProvider = ({ children }) => {
     });
 
     return () => {
-      socket.off('nuevaAlarma');
       socket.off('notificacion');
     };
   }, []);
@@ -100,9 +82,8 @@ export const NotificationProvider = ({ children }) => {
   };
 
   return (
-    <NotificationContext.Provider value={{ 
-      showNotification, 
-      showAlarmNotification, 
+    <NotificationContext.Provider value={{
+      showNotification,
       showGeneralNotification,
       notificationHistory,
       clearHistory,

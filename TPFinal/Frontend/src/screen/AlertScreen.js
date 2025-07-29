@@ -115,14 +115,7 @@ export default function AlertScreen() {
         emisor
       );
 
-      // También enviar como alarma específica
-      sendAlarm(
-        userData.vecindarioId,
-        alertType.label,
-        `Se ha activado una alarma de ${alertType.label} en el vecindario`,
-        emisor
-      );
-
+    
       // Crear la alarma en la base de datos
       const alarmaResponse = await axios.post(`${BASE_URL}/alarmas`, {
         tipo: alertType.label,
