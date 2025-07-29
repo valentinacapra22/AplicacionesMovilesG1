@@ -9,7 +9,7 @@ export const AuthProvider = ({ children }) => {
   const [authData, setAuthData] = useState({
     email: "",
     password: "",
-    isAuthenticated: true, // Cambiado a true para testing
+    isAuthenticated: false, // Cambiado de vuelta a false para que inicie en SplashScreen
     token: null, // Agregar el token JWT
   });
 
