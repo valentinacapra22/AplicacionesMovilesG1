@@ -30,7 +30,7 @@ export const loginUser = async (data) => {
         .setExpirationTime(TOKEN_EXPIRATION)
         .sign(JWT_SECRET); // Firma el token
 
-    return { token, usuarioId: user.usuarioId };
+    return { token, user };
 };
 
 export const validateToken = async (token) => {

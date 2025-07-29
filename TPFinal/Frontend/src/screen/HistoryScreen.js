@@ -5,175 +5,336 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  RefreshControl,
+  TextInput,
   Alert,
+  RefreshControl,
+  ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNotification } from '../context/NotificationContext';
 import { useAuth } from '../context/AuthContext';
+import { useNotification } from '../context/NotificationContext';
+import {
+  obtenerHistorial,
+  obtenerHistorialPorTipo,
+  obtenerEstadisticas,
+  buscarNotificaciones,
+  limpiarHistorial,
+  formatearFecha,
+  obtenerIcono,
+  obtenerColor
+} from '../service/HistorialService';
+import { THEME } from '../theme/theme';
 
 export default function HistoryScreen() {
-  const { notificationHistory, clearHistory, getNotificationsByType } = useNotification();
   const { authData } = useAuth();
+  const { showNotification } = useNotification();
+  const [notificaciones, setNotificaciones] = useState([]);
+  const [estadisticas, setEstadisticas] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [filter, setFilter] = useState('all'); // 'all', 'alarm', 'info'
+  const [filtroTipo, setFiltroTipo] = useState('todos');
+  const [busqueda, setBusqueda] = useState('');
+  const [userData, setUserData] = useState(null);
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    // Simular refresh
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1000);
+  const tiposNotificacion = [
+    { key: 'todos', label: 'Todas', icon: 'list' },
+    { key: 'alarma', label: 'Alarmas', icon: 'warning' },
+    { key: 'info', label: 'Información', icon: 'information-circle' },
+    { key: 'success', label: 'Éxito', icon: 'checkmark-circle' },
+    { key: 'warning', label: 'Advertencias', icon: 'alert-circle' }
+  ];
+
+  // Cargar datos del usuario
+  useEffect(() => {
+    const cargarUsuario = async () => {
+      try {
+        const token = localStorage.getItem("userToken") || authData.token;
+        const userDataFromStorage = localStorage.getItem("userData");
+        
+        if (!token) {
+          Alert.alert("Error", "No hay datos de autenticación");
+          return;
+        }
+
+        let user;
+        
+        // Intentar obtener datos del localStorage primero
+        if (userDataFromStorage) {
+          user = JSON.parse(userDataFromStorage);
+          setUserData(user);
+        } else {
+          // Si no hay datos en localStorage, obtenerlos del backend usando el endpoint /me
+          const response = await fetch(`http://localhost:3000/api/usuarios/me`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (response.ok) {
+            user = await response.json();
+            setUserData(user);
+            // Guardar en localStorage para futuras consultas
+            localStorage.setItem("userData", JSON.stringify(user));
+          } else {
+            console.error('Error obteniendo datos del usuario:', response.status);
+            Alert.alert("Error", "No se pudieron obtener los datos del usuario");
+          }
+        }
+      } catch (error) {
+        console.error('Error cargando usuario:', error);
+      }
+    };
+
+    cargarUsuario();
+  }, [authData]);
+
+  // Cargar historial cuando cambie el usuario o filtros
+  useEffect(() => {
+    console.log('userData:', userData);
+    console.log('vecindarioId:', userData?.vecindarioId);
+    if (userData?.vecindarioId) {
+      cargarHistorial();
+    }
+  }, [userData, filtroTipo]);
+
+  const cargarHistorial = async () => {
+    if (!userData?.vecindarioId) {
+      console.log('No hay vecindarioId disponible');
+      return;
+    }
+
+    console.log('Cargando historial para vecindarioId:', userData.vecindarioId);
+    setLoading(true);
+    try {
+      let data;
+      
+      if (filtroTipo === 'todos') {
+        data = await obtenerHistorial(userData.vecindarioId, 100);
+      } else {
+        data = await obtenerHistorialPorTipo(userData.vecindarioId, filtroTipo, 100);
+      }
+
+      console.log('Datos obtenidos:', data);
+      setNotificaciones(data.data || []);
+      
+      // Cargar estadísticas
+      const stats = await obtenerEstadisticas(userData.vecindarioId);
+      setEstadisticas(stats.data);
+      
+    } catch (error) {
+      console.error('Error cargando historial:', error);
+      showNotification('Error', 'No se pudo cargar el historial', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleClearHistory = () => {
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await cargarHistorial();
+    setRefreshing(false);
+  };
+
+  const buscarNotificacionesHandler = async () => {
+    if (!busqueda.trim() || !userData?.vecindarioId) return;
+
+    setLoading(true);
+    try {
+      const data = await buscarNotificaciones(userData.vecindarioId, busqueda);
+      setNotificaciones(data.data || []);
+    } catch (error) {
+      console.error('Error buscando notificaciones:', error);
+      showNotification('Error', 'No se pudo realizar la búsqueda', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const limpiarHistorialHandler = async () => {
+    if (!userData?.vecindarioId) return;
+
     Alert.alert(
       'Limpiar Historial',
-      '¿Estás seguro de que quieres eliminar todo el historial de notificaciones?',
+      '¿Estás seguro de que quieres eliminar todo el historial de notificaciones? Esta acción no se puede deshacer.',
       [
         { text: 'Cancelar', style: 'cancel' },
-        { 
-          text: 'Limpiar', 
+        {
+          text: 'Limpiar',
           style: 'destructive',
-          onPress: () => clearHistory()
-        },
+          onPress: async () => {
+            try {
+              await limpiarHistorial(userData.vecindarioId);
+              setNotificaciones([]);
+              setEstadisticas(null);
+              showNotification('Éxito', 'Historial limpiado correctamente', 'success');
+            } catch (error) {
+              console.error('Error limpiando historial:', error);
+              showNotification('Error', 'No se pudo limpiar el historial', 'error');
+            }
+          }
+        }
       ]
     );
   };
 
-  const getFilteredNotifications = () => {
-    if (filter === 'all') {
-      return notificationHistory;
-    }
-    return getNotificationsByType(filter);
-  };
+  const agregarNotificacionesPruebaHandler = async () => {
+    if (!userData?.vecindarioId) return;
 
-  const getNotificationIcon = (type) => {
-    switch (type) {
-      case 'alarm':
-        return '🚨';
-      case 'success':
-        return '✅';
-      case 'warning':
-        return '⚠️';
-      default:
-        return '📢';
-    }
-  };
+    try {
+      const token = localStorage.getItem("userToken") || authData.token;
+      const response = await fetch(`http://localhost:3000/api/historial/vecindario/${userData.vecindarioId}/prueba`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
 
-  const getNotificationColor = (type) => {
-    switch (type) {
-      case 'alarm':
-        return '#dc3545';
-      case 'success':
-        return '#28a745';
-      case 'warning':
-        return '#ffc107';
-      default:
-        return '#007bff';
+      if (response.ok) {
+        showNotification('Éxito', 'Notificaciones de prueba agregadas', 'success');
+        // Recargar el historial
+        await cargarHistorial();
+      } else {
+        showNotification('Error', 'No se pudieron agregar las notificaciones de prueba', 'error');
+      }
+    } catch (error) {
+      console.error('Error agregando notificaciones de prueba:', error);
+      showNotification('Error', 'Error al agregar notificaciones de prueba', 'error');
     }
   };
 
-  const formatTime = (timestamp) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffInMinutes = Math.floor((now - date) / (1000 * 60));
-    
-    if (diffInMinutes < 1) return 'Ahora';
-    if (diffInMinutes < 60) return `Hace ${diffInMinutes} min`;
-    if (diffInMinutes < 1440) return `Hace ${Math.floor(diffInMinutes / 60)}h`;
-    return date.toLocaleDateString();
-  };
-
-  const renderNotification = ({ item }) => (
-    <View style={[
-      styles.notificationItem,
-      { borderLeftColor: getNotificationColor(item.type) }
-    ]}>
-      <View style={styles.notificationHeader}>
-        <Text style={styles.notificationIcon}>
-          {getNotificationIcon(item.type)}
-        </Text>
-        <View style={styles.notificationInfo}>
-          <Text style={styles.notificationTitle}>{item.title}</Text>
-          <Text style={styles.notificationTime}>
-            {formatTime(item.timestamp)}
+  const renderNotificacion = ({ item }) => (
+    <View style={[styles.notificacionItem, { borderLeftColor: obtenerColor(item.tipo) }]}>
+      <View style={styles.notificacionHeader}>
+        <Text style={styles.notificacionIcon}>{obtenerIcono(item.tipo)}</Text>
+        <View style={styles.notificacionInfo}>
+          <Text style={styles.notificacionTitulo}>
+            {item.titulo || `Notificación ${item.tipo}`}
+          </Text>
+          <Text style={styles.notificacionEmisor}>
+            Por: {item.emisor || 'Sistema'}
           </Text>
         </View>
+        <Text style={styles.notificacionTiempo}>
+          {formatearFecha(item.timestamp)}
+        </Text>
       </View>
-      <Text style={styles.notificationMessage}>{item.message}</Text>
+      <Text style={styles.notificacionMensaje}>{item.mensaje}</Text>
     </View>
   );
 
-  const renderFilterButton = (filterType, label, icon) => (
-    <TouchableOpacity
-      style={[
-        styles.filterButton,
-        filter === filterType && styles.filterButtonActive
-      ]}
-      onPress={() => setFilter(filterType)}
-    >
-      <Ionicons 
-        name={icon} 
-        size={16} 
-        color={filter === filterType ? '#fff' : '#666'} 
-      />
-      <Text style={[
-        styles.filterButtonText,
-        filter === filterType && styles.filterButtonTextActive
-      ]}>
-        {label}
-      </Text>
-    </TouchableOpacity>
-  );
+  const renderEstadisticas = () => {
+    if (!estadisticas) return null;
+
+    return (
+      <View style={styles.estadisticasContainer}>
+        <Text style={styles.estadisticasTitulo}>📊 Estadísticas</Text>
+        <View style={styles.estadisticasGrid}>
+          <View style={styles.estadisticaItem}>
+            <Text style={styles.estadisticaNumero}>{estadisticas.total}</Text>
+            <Text style={styles.estadisticaLabel}>Total</Text>
+          </View>
+          {Object.entries(estadisticas.porTipo).map(([tipo, cantidad]) => (
+            <View key={tipo} style={styles.estadisticaItem}>
+              <Text style={styles.estadisticaNumero}>{cantidad}</Text>
+              <Text style={styles.estadisticaLabel}>{tipo}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+    );
+  };
+
+  if (loading && !refreshing) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={THEME.colors.primary} />
+        <Text style={styles.loadingText}>Cargando historial...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>📋 Historial de Notificaciones</Text>
-        <TouchableOpacity onPress={handleClearHistory} style={styles.clearButton}>
-          <Ionicons name="trash-outline" size={20} color="#dc3545" />
-          <Text style={styles.clearButtonText}>Limpiar</Text>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity onPress={agregarNotificacionesPruebaHandler} style={styles.testButton}>
+            <Ionicons name="add-circle-outline" size={20} color="#28a745" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={limpiarHistorialHandler} style={styles.limpiarButton}>
+            <Ionicons name="trash-outline" size={20} color="#dc3545" />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Barra de búsqueda */}
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Buscar notificaciones..."
+          value={busqueda}
+          onChangeText={setBusqueda}
+          onSubmitEditing={buscarNotificacionesHandler}
+        />
+        <TouchableOpacity onPress={buscarNotificacionesHandler} style={styles.searchButton}>
+          <Ionicons name="search" size={20} color="#fff" />
         </TouchableOpacity>
       </View>
 
-      <View style={styles.filterContainer}>
-        {renderFilterButton('all', 'Todas', 'list')}
-        {renderFilterButton('alarm', 'Alarmas', 'warning')}
-        {renderFilterButton('info', 'Info', 'information-circle')}
-      </View>
-
-      {getFilteredNotifications().length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Ionicons name="notifications-off" size={64} color="#ccc" />
-          <Text style={styles.emptyText}>
-            {filter === 'all' 
-              ? 'No hay notificaciones en el historial'
-              : `No hay notificaciones de tipo "${filter}"`
-            }
-          </Text>
-        </View>
-      ) : (
+      {/* Filtros por tipo */}
+      <View style={styles.filtrosContainer}>
         <FlatList
-          data={getFilteredNotifications()}
-          renderItem={renderNotification}
-          keyExtractor={(item) => item.id.toString()}
-          style={styles.notificationsList}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-          showsVerticalScrollIndicator={false}
+          data={tiposNotificacion}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={[
+                styles.filtroButton,
+                filtroTipo === item.key && styles.filtroButtonActive
+              ]}
+              onPress={() => setFiltroTipo(item.key)}
+            >
+              <Ionicons 
+                name={item.icon} 
+                size={16} 
+                color={filtroTipo === item.key ? '#fff' : THEME.colors.primary} 
+              />
+              <Text style={[
+                styles.filtroText,
+                filtroTipo === item.key && styles.filtroTextActive
+              ]}>
+                {item.label}
+              </Text>
+            </TouchableOpacity>
+          )}
+          keyExtractor={item => item.key}
         />
-      )}
-
-      <View style={styles.statsContainer}>
-        <Text style={styles.statsText}>
-          Total: {notificationHistory.length} notificaciones
-        </Text>
-        <Text style={styles.statsText}>
-          Alarmas: {getNotificationsByType('alarm').length}
-        </Text>
       </View>
+
+      {/* Estadísticas */}
+      {renderEstadisticas()}
+
+      {/* Lista de notificaciones */}
+      <FlatList
+        data={notificaciones}
+        renderItem={renderNotificacion}
+        keyExtractor={item => item.id}
+        style={styles.notificacionesList}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Ionicons name="document-text-outline" size={64} color="#ccc" />
+            <Text style={styles.emptyText}>
+              {busqueda ? 'No se encontraron notificaciones' : 'No hay notificaciones en el historial'}
+            </Text>
+          </View>
+        }
+      />
     </View>
   );
 }
@@ -183,128 +344,186 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8f9fa',
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    padding: 16,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#e9ecef',
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  testButton: {
+    padding: 8,
+    marginRight: 8,
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: '#333',
   },
-  clearButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  limpiarButton: {
     padding: 8,
   },
-  clearButtonText: {
-    marginLeft: 4,
-    color: '#dc3545',
-    fontSize: 14,
-  },
-  filterContainer: {
+  searchContainer: {
     flexDirection: 'row',
-    padding: 15,
+    padding: 16,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#e9ecef',
   },
-  filterButton: {
+  searchInput: {
+    flex: 1,
+    height: 40,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    marginRight: 8,
+  },
+  searchButton: {
+    width: 40,
+    height: 40,
+    backgroundColor: THEME.colors.primary,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  filtrosContainer: {
+    paddingVertical: 12,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e9ecef',
+  },
+  filtroButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    marginRight: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginHorizontal: 4,
     borderRadius: 20,
-    backgroundColor: '#f8f9fa',
     borderWidth: 1,
-    borderColor: '#e9ecef',
+    borderColor: THEME.colors.primary,
   },
-  filterButtonActive: {
-    backgroundColor: '#007bff',
-    borderColor: '#007bff',
+  filtroButtonActive: {
+    backgroundColor: THEME.colors.primary,
   },
-  filterButtonText: {
+  filtroText: {
     marginLeft: 4,
-    fontSize: 12,
-    color: '#666',
+    fontSize: 14,
+    color: THEME.colors.primary,
   },
-  filterButtonTextActive: {
+  filtroTextActive: {
     color: '#fff',
   },
-  notificationsList: {
+  estadisticasContainer: {
+    margin: 16,
+    padding: 16,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  estadisticasTitulo: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    color: '#333',
+  },
+  estadisticasGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-around',
+  },
+  estadisticaItem: {
+    alignItems: 'center',
+    marginVertical: 8,
+    minWidth: 60,
+  },
+  estadisticaNumero: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: THEME.colors.primary,
+  },
+  estadisticaLabel: {
+    fontSize: 12,
+    color: '#666',
+    textTransform: 'capitalize',
+  },
+  notificacionesList: {
     flex: 1,
   },
-  notificationItem: {
+  notificacionItem: {
     backgroundColor: '#fff',
-    marginHorizontal: 15,
-    marginVertical: 5,
-    padding: 15,
-    borderRadius: 10,
+    marginHorizontal: 16,
+    marginVertical: 4,
+    padding: 16,
+    borderRadius: 12,
     borderLeftWidth: 4,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
   },
-  notificationHeader: {
+  notificacionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 8,
   },
-  notificationIcon: {
+  notificacionIcon: {
     fontSize: 20,
-    marginRight: 10,
+    marginRight: 12,
   },
-  notificationInfo: {
+  notificacionInfo: {
     flex: 1,
   },
-  notificationTitle: {
+  notificacionTitulo: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#2c3e50',
-    marginBottom: 2,
+    fontWeight: 'bold',
+    color: '#333',
   },
-  notificationTime: {
+  notificacionEmisor: {
     fontSize: 12,
-    color: '#6c757d',
+    color: '#666',
+    marginTop: 2,
   },
-  notificationMessage: {
+  notificacionTiempo: {
+    fontSize: 12,
+    color: '#999',
+  },
+  notificacionMensaje: {
     fontSize: 14,
-    color: '#495057',
+    color: '#555',
     lineHeight: 20,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 40,
+    paddingVertical: 60,
   },
   emptyText: {
-    marginTop: 16,
     fontSize: 16,
-    color: '#6c757d',
+    color: '#999',
+    marginTop: 16,
     textAlign: 'center',
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: 15,
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#e9ecef',
-  },
-  statsText: {
-    fontSize: 12,
-    color: '#6c757d',
   },
 });

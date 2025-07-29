@@ -8,11 +8,11 @@ export const login = catchAsync(async (req, res) => {
   // Llamada al servicio de autenticación
   const loginData = await authService.loginUser({ email, contrasena });
 
-  // Respuesta exitosa con el token y el userId
+  // Respuesta exitosa con el token y los datos del usuario
   res.status(200).json({
     message: "Autenticación exitosa",
     token: loginData.token,
-    usuarioId: loginData.usuarioId,
+    user: loginData.user,
   });
 });
 

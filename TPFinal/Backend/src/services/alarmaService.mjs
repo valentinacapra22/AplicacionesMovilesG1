@@ -1,4 +1,6 @@
 import { PrismaClient } from "@prisma/client";
+import { io } from "../../init.mjs";
+import { agregarNotificacion } from "./historialNotificacionesService.mjs";
 
 const prisma = new PrismaClient();
 
@@ -71,13 +73,14 @@ export const getAlarmaById = async (id) => {
 
 // Crear una nueva alarma
 export const createAlarma = async (data) => {
-    const { activo, fechaHora, tipo, usuarioId } = data;
+    const { activo, fechaHora, tipo, usuarioId, descripcion } = data;
 
     if (!tipo || !usuarioId) {
         throw new Error("Todos los campos (tipo, usuarioId) son obligatorios");
     }
 
-    return await prisma.alarma.create({
+    // Crear la alarma (sin el campo descripcion ya que no existe en la BD)
+    const alarma = await prisma.alarma.create({
         data: {
             activo: activo !== undefined ? activo : true,
             fechaHora: fechaHora ? new Date(fechaHora) : new Date(),
@@ -86,7 +89,46 @@ export const createAlarma = async (data) => {
                 connect: { usuarioId: parseInt(usuarioId) },
             },
         },
+        include: {
+            usuario: {
+                select: { nombre: true, apellido: true, vecindarioId: true }
+            }
+        }
     });
+
+    // Enviar notificación por socket y guardar en base de datos
+    if (alarma.usuario && alarma.usuario.vecindarioId) {
+        const notificacion = {
+            mensaje: descripcion || `¡Alarma de ${tipo} activada en tu vecindario!`,
+            tipo: 'alarma',
+            emisor: `${alarma.usuario.nombre} ${alarma.usuario.apellido}`,
+            timestamp: new Date().toISOString(),
+            vecindarioId: alarma.usuario.vecindarioId,
+            alarma: {
+                id: alarma.alarmaId,
+                tipo: alarma.tipo,
+                descripcion: descripcion || `Alarma de ${tipo}`,
+                fechaHora: alarma.fechaHora
+            }
+        };
+
+        // Enviar UNA SOLA notificación a todos los usuarios del vecindario
+        // Usar emit en lugar de to().emit() para asegurar que se envíe solo una vez
+        io.to(`vecindario_${alarma.usuario.vecindarioId}`).emit('nuevaAlarma', notificacion);
+        
+        // Guardar en base de datos para el historial
+        try {
+            await agregarNotificacion(alarma.usuario.vecindarioId, notificacion);
+            console.log(`📝 Notificación guardada en base de datos para vecindario ${alarma.usuario.vecindarioId}`);
+        } catch (error) {
+            console.error('❌ Error guardando notificación en base de datos:', error);
+            // No fallar si la base de datos no está disponible
+        }
+        
+        console.log(`📢 Alarma enviada al vecindario ${alarma.usuario.vecindarioId}: ${tipo}`);
+    }
+
+    return alarma;
 };
 
 // Actualizar una alarma existente

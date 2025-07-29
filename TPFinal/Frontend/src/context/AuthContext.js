@@ -9,7 +9,7 @@ export const AuthProvider = ({ children }) => {
   const [authData, setAuthData] = useState({
     email: "",
     password: "",
-    isAuthenticated: false, //ACA SE TIENE QUE CAMBIAR PARA TESTEAR
+    isAuthenticated: true, // Cambiado a true para testing
     token: null, // Agregar el token JWT
   });
 

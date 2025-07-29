@@ -11,7 +11,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useNotification } from "../context/NotificationContext";
 import axios from "axios";
-import { connectSocket, sendNotification, sendAlarm } from "../utils/socket";
+import { connectSocket } from "../utils/socket";
 import { useAuth } from "../context/AuthContext";
 import * as Location from 'expo-location';
 
@@ -24,6 +24,7 @@ export default function AlertScreen() {
   const { authData } = useAuth();
   const [location, setLocation] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -47,9 +48,10 @@ export default function AlertScreen() {
         const { data: user } = await axios.get(`${BASE_URL}/usuarios/${userId}`);
         setUserData(user);
 
-        // Conectar al socket con el ID del vecindario
-        if (user.vecindarioId) {
+        // Conectar al socket SOLO UNA VEZ con el ID del vecindario
+        if (user.vecindarioId && !isConnected) {
           connectSocket(userId, user.vecindarioId);
+          setIsConnected(true);
           console.log(`🔌 Conectado al vecindario ${user.vecindarioId}`);
         }
       } catch (error) {
@@ -107,30 +109,14 @@ export default function AlertScreen() {
       const userId = localStorage.getItem("userId");
       const emisor = `${userData.nombre} ${userData.apellido}`;
 
-      // Enviar notificación por socket inmediatamente
-      sendNotification(
-        userData.vecindarioId, 
-        `Alarma de ${alertType.label} activada`, 
-        'alarma', 
-        emisor
-      );
-
-      // También enviar como alarma específica
-      sendAlarm(
-        userData.vecindarioId,
-        alertType.label,
-        `Se ha activado una alarma de ${alertType.label} en el vecindario`,
-        emisor
-      );
-
-      // Crear la alarma en la base de datos
+      // Crear la alarma en la base de datos (esto enviará la notificación automáticamente)
       const alarmaResponse = await axios.post(`${BASE_URL}/alarmas`, {
         tipo: alertType.label,
         descripcion: `Alarma de ${alertType.label} activada por ${emisor}`,
         usuarioId: userId,
       });
 
-      const alarmaId = alarmaResponse.data.alarma.alarmaId;
+      const alarmaId = alarmaResponse.data.alarmaId;
 
       // Guardar la ubicación
       const ubicacionResponse = await axios.post(`${BASE_URL}/ubicaciones`, {
@@ -145,7 +131,7 @@ export default function AlertScreen() {
         ubicacion: ubicacionResponse.data
       });
 
-      // Mostrar notificación local
+      // Mostrar notificación local de confirmación
       showNotification(
         `🚨 Alarma de ${alertType.label}`,
         `Alarma activada exitosamente en tu vecindario`,

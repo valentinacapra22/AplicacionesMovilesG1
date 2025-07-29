@@ -10,9 +10,10 @@ const login = async (email, password) => {
       contrasena: password,
     });
 
-    // Almacenar token en localStorage
+    // Almacenar token y datos del usuario en localStorage
     if (response.data.token) {
       localStorage.setItem('userToken', response.data.token);
+      localStorage.setItem('usuarioId', response.data.user.usuarioId);
       localStorage.setItem('userData', JSON.stringify(response.data.user));
     }
 

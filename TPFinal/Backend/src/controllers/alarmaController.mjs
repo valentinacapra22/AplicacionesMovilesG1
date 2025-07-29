@@ -1,6 +1,5 @@
 import * as alarmaService from "../services/alarmaService.mjs";
 import catchAsync from "../helpers/catchAsync.mjs";
-import { io } from "../../init.mjs";
 
 export const activarAlarma = catchAsync(async (req, res) => {
   const usuarioId = req.usuarioId;
@@ -11,34 +10,13 @@ export const activarAlarma = catchAsync(async (req, res) => {
   }
 
   try {
-    const { alarma, usuariosDelVecindario } = await alarmaService.activarAlarma(usuarioId, descripcion, tipo);
-
-    // Obtener información del usuario que activó la alarma
-    const usuarioEmisor = await alarmaService.getUsuarioById(usuarioId);
-    
-    // Crear notificación para enviar por socket
-    const notificacion = {
-      mensaje: `¡Alarma de ${tipo} activada en tu vecindario!`,
-      tipo: 'alarma',
-      emisor: `${usuarioEmisor.nombre} ${usuarioEmisor.apellido}`,
-      timestamp: new Date().toISOString(),
-      vecindarioId: usuarioEmisor.vecindarioId,
-      alarma: {
-        id: alarma.alarmaId,
-        tipo: alarma.tipo,
-        descripcion: alarma.descripcion,
-        fechaHora: alarma.fechaHora
-      }
-    };
-
-    // Enviar notificación a todos los usuarios del vecindario
-    if (usuariosDelVecindario && usuariosDelVecindario.length > 0) {
-      // Enviar por socket a la sala del vecindario
-      io.to(`vecindario_${usuarioEmisor.vecindarioId}`).emit('nuevaAlarma', notificacion);
-      io.to(`vecindario_${usuarioEmisor.vecindarioId}`).emit('notificacion', notificacion);
-      
-      console.log(`📢 Alarma enviada a ${usuariosDelVecindario.length} usuarios del vecindario ${usuarioEmisor.vecindarioId}`);
-    }
+    // Usar el servicio createAlarma que ya maneja las notificaciones
+    const alarma = await alarmaService.createAlarma({
+      tipo,
+      descripcion,
+      usuarioId,
+      activo: true
+    });
 
     res.status(200).json({ 
       message: "Alarma activada exitosamente", 

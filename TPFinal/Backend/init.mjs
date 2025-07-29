@@ -2,6 +2,7 @@ import http from 'http';
 import app from './src/app.mjs';
 import { Server } from 'socket.io';
 
+
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
@@ -53,19 +54,14 @@ io.on('connection', (socket) => {
     
     const notificacion = {
       mensaje,
-      tipo: tipo || 'alerta',
+      tipo: tipo || 'info',
       emisor: emisor || 'Usuario',
       timestamp: new Date().toISOString(),
       vecindarioId: sala
     };
     
-    // Enviar a todos los usuarios del vecindario
+    // Enviar notificación al vecindario
     io.to(`vecindario_${sala}`).emit('notificacion', notificacion);
-    
-    // También emitir evento específico para alarmas
-    if (tipo === 'alarma') {
-      io.to(`vecindario_${sala}`).emit('nuevaAlarma', notificacion);
-    }
   });
 
   // Evento para nueva alarma
@@ -81,9 +77,8 @@ io.on('connection', (socket) => {
       vecindarioId
     };
     
-    // Enviar a todos los usuarios del vecindario
+    // Enviar notificación de alarma al vecindario
     io.to(`vecindario_${vecindarioId}`).emit('nuevaAlarma', notificacion);
-    io.to(`vecindario_${vecindarioId}`).emit('notificacion', notificacion);
   });
 
   // Manejo de desconexión
@@ -122,10 +117,22 @@ io.on('connection', (socket) => {
 
 const port = process.env.PORT || 3000;
 
-server.listen(port, () => {
-  console.log(`🚀 Servidor corriendo en el puerto ${port}`);
-  console.log(`🔌 Socket.IO configurado y listo`);
-});
+// Inicializar servidor
+const startServer = async () => {
+  try {
+    // Iniciar servidor HTTP
+    server.listen(port, () => {
+      console.log(`🚀 Servidor corriendo en el puerto ${port}`);
+      console.log(`🔌 Socket.IO configurado y listo`);
+      console.log(`📝 Historial de notificaciones persistente disponible`);
+    });
+  } catch (error) {
+    console.error('❌ Error iniciando servidor:', error);
+    process.exit(1);
+  }
+};
+
+startServer();
 
 // Exportar io para uso en otros módulos
 export { io };

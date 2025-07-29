@@ -10,6 +10,7 @@ import morgan from "morgan";
 import cors from "cors";
 import globalErrorHandler from "./middleware/globalErrorHandler.mjs";
 import ubicacionRoutes from "./routes/ubicacionRoutes.mjs";
+import historialNotificacionesRoutes from "./routes/historialNotificacionesRoutes.mjs";
 
 const app = express();
 
@@ -40,6 +41,9 @@ app.use("/api/alarmas", alarmaRoutes);
 // Rutas de notificaciones
 app.use("/api/notificaciones", notificacionRoutes);
 
+// Rutas de historial de notificaciones
+app.use("/api/historial", historialNotificacionesRoutes);
+
 // Rutas de Usuario
 app.use("/api/usuarios", usuarioRoutes);
 
@@ -51,9 +55,5 @@ app.use("/api/ubicaciones", ubicacionRoutes);
 
 // Middleware de manejo de errores
 app.use(globalErrorHandler);
-
-
-
-
 
 export default app;
