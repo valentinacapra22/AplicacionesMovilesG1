@@ -7,7 +7,6 @@ import MainTabNavigator from "./src/navigation/MainTabNavigator";
 
 function AppContent() {
   const { authData } = useAuth();
-  
 
   return (
     <NavigationContainer>
@@ -19,7 +18,7 @@ function AppContent() {
 export default function App() {
   return (
     <AuthProvider>
-      <NotificationProvider> 
+      <NotificationProvider>
         <AppContent />
       </NotificationProvider>
     </AuthProvider>
