@@ -47,16 +47,12 @@ const ServiceDetailsScreen = () => {
         vecindario,
       };
 
-      console.log('✅ Datos completos:', datosCompletos);
+      console.log('Datos completos:', datosCompletos);
 
-      // Opción recomendada: Reset del stack de navegación
       navigation.reset({
         index: 0,
         routes: [{ name: 'Login' }],
       });
-
-      // Opción alternativa: Navegación simple
-      // navigation.navigate('Login');
     }
   };
 
