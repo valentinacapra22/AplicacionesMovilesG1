@@ -11,7 +11,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useNotification } from "../context/NotificationContext";
 import axios from "axios";
-import { connectSocket, sendNotification, sendAlarm } from "../utils/socket";
+import { connectSocket } from "../utils/socket";
 import { useAuth } from "../context/AuthContext";
 import * as Location from 'expo-location';
 
@@ -24,6 +24,7 @@ export default function AlertScreen() {
   const { authData } = useAuth();
   const [location, setLocation] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -47,10 +48,11 @@ export default function AlertScreen() {
         const { data: user } = await axios.get(`${BASE_URL}/usuarios/${userId}`);
         setUserData(user);
 
-        // Conectar al socket con el ID del vecindario
-        if (user.vecindarioId) {
+        // Conectar al socket SOLO UNA VEZ con el ID del vecindario
+        if (user.vecindarioId && !isConnected) {
           connectSocket(userId, user.vecindarioId);
-          console.log(`🔌 Conectado al vecindario ${user.vecindarioId}`);
+          setIsConnected(true);
+          console.log(`Conectado al vecindario ${user.vecindarioId}`);
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
@@ -74,7 +76,7 @@ export default function AlertScreen() {
           accuracy: Location.Accuracy.High,
         });
         setLocation(currentLocation.coords);
-        console.log('📍 Ubicación obtenida:', currentLocation.coords);
+        console.log(' Ubicación obtenida:', currentLocation.coords);
       } catch (error) {
         console.error('Error obteniendo ubicación:', error);
         Alert.alert("Error", "No se pudo obtener la ubicación");
@@ -107,24 +109,16 @@ export default function AlertScreen() {
       const userId = localStorage.getItem("userId");
       const emisor = `${userData.nombre} ${userData.apellido}`;
 
-      // Enviar notificación por socket inmediatamente
-      sendNotification(
-        userData.vecindarioId, 
-        `Alarma de ${alertType.label} activada`, 
-        'alarma', 
-        emisor
-      );
-
-    
-      // Crear la alarma en la base de datos
+      // Crear la alarma en la base de datos (esto enviará la notificación automáticamente)
       const alarmaResponse = await axios.post(`${BASE_URL}/alarmas`, {
         tipo: alertType.label,
         descripcion: `Alarma de ${alertType.label} activada por ${emisor}`,
         usuarioId: userId,
       });
 
+      const alarmaId = alarmaResponse.data.alarmaId;
 
-      const alarmaId = alarmaResponse.data.alarma.alarmaId;
+      // Guardar la ubicación
       const ubicacionResponse = await axios.post(`${BASE_URL}/ubicaciones`, {
         usuarioId: userId,
         alarmaId,
@@ -132,21 +126,20 @@ export default function AlertScreen() {
         longitud: location.longitude,
       });
 
-
-      console.log('✅ Alarma y ubicación guardadas:', {
+      console.log(' Alarma y ubicación guardadas:', {
         alarma: alarmaResponse.data,
         ubicacion: ubicacionResponse.data
       });
 
-      // Mostrar notificación local
+      // Mostrar notificación local de confirmación
       showNotification(
-        `🚨 Alarma de ${alertType.label}`,
+        ` Alarma de ${alertType.label}`,
         `Alarma activada exitosamente en tu vecindario`,
         'success'
       );
 
     } catch (error) {
-      console.error('❌ Error activando alarma:', error);
+      console.error(' Error activando alarma:', error);
       Alert.alert("Error", "No se pudo activar la alarma. Intenta nuevamente.");
     } finally {
       setIsLoading(false);
@@ -156,7 +149,7 @@ export default function AlertScreen() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>🚨 Alertas de Emergencia</Text>
+        <Text style={styles.headerTitle}> Alertas de Emergencia</Text>
         <Text style={styles.headerSubtitle}>
           Selecciona el tipo de emergencia para alertar a tu vecindario
         </Text>
@@ -198,7 +191,7 @@ export default function AlertScreen() {
       {!location && (
         <View style={styles.locationWarning}>
           <Text style={styles.locationWarningText}>
-            ⚠️ Obteniendo ubicación...
+            Obteniendo ubicación...
           </Text>
         </View>
       )}

@@ -46,20 +46,22 @@ export const createNotificacion = async (data) => {
         }
     });
 
-    // Enviar notificación por socket a todos los usuarios del vecindario
-    const notificacionSocket = {
-        mensaje: contenido,
-        tipo: tipo,
-        emisor: `${usuario.nombre} ${usuario.apellido}`,
-        timestamp: new Date().toISOString(),
-        vecindarioId: usuario.vecindarioId,
-        titulo: titulo
-    };
+    // SOLO enviar notificación por socket si NO es una alarma (las alarmas se manejan en alarmaController)
+    if (tipo !== 'alarma') {
+        const notificacionSocket = {
+            mensaje: contenido,
+            tipo: tipo,
+            emisor: `${usuario.nombre} ${usuario.apellido}`,
+            timestamp: new Date().toISOString(),
+            vecindarioId: usuario.vecindarioId,
+            titulo: titulo
+        };
 
-    // Enviar a todos los usuarios del vecindario
-    io.to(`vecindario_${usuario.vecindarioId}`).emit('notificacion', notificacionSocket);
-    
-    console.log(`📢 Notificación enviada al vecindario ${usuario.vecindarioId}: ${titulo}`);
+        // Enviar a todos los usuarios del vecindario
+        io.to(`vecindario_${usuario.vecindarioId}`).emit('notificacion', notificacionSocket);
+        
+        console.log(`📢 Notificación enviada al vecindario ${usuario.vecindarioId}: ${titulo}`);
+    }
 
     return nuevaNotificacion;
 };

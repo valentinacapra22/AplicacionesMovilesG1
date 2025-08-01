@@ -1,20 +1,24 @@
 import React, { createContext, useState, useContext } from "react";
-import { login } from "../service/AuthService";
+import { login } from "../service/AuthService"; // Asegúrate de importar la función de autenticación
 
+// Crear el contexto de autenticación
 const AuthContext = createContext();
 
+// Proveedor de autenticación
 export const AuthProvider = ({ children }) => {
   const [authData, setAuthData] = useState({
     email: "",
     password: "",
-    isAuthenticated: false, 
-    token: null,
+    isAuthenticated: false, // Cambiado de vuelta a false para que inicie en SplashScreen
+    token: null, // Agregar el token JWT
   });
 
+  // Función para realizar el login
   const loginUser = async (email, password) => {
     try {
-      const data = await login(email, password); 
+      const data = await login(email, password); // Llama a la función de autenticación
       if (data) {
+        // Si la autenticación es exitosa, guarda el token y el email
         console.log("llego a cargar el AuthData");
         setAuthData({
           email,
@@ -24,6 +28,7 @@ export const AuthProvider = ({ children }) => {
         });
         return true;
       } else {
+        // Si la autenticación falla, muestra un mensaje de error
         alert("Error al iniciar sesión: " + data.message);
       }
     } catch (error) {
@@ -37,7 +42,7 @@ export const AuthProvider = ({ children }) => {
       password: "",
       isAuthenticated: false,
       token: null,
-    });
+    }); // Limpiar datos de autenticación
   };
 
   return (
@@ -47,4 +52,5 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
+// Hook personalizado para usar el contexto de autenticación
 export const useAuth = () => useContext(AuthContext);
