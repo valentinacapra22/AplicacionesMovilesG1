@@ -1,16 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TextInput,
-  TouchableOpacity,
-  Alert,
-  ActivityIndicator,
-  Platform,
-  Dimensions,
-} from "react-native";
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator, Platform, Dimensions,} from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { updateUserProfile } from "../service/AuthService";
 
@@ -85,48 +74,42 @@ export default function EditProfileScreen({ navigation, route }) {
       const token = localStorage.getItem("userToken") || authData?.token;
       const userId = localStorage.getItem("userId") || authData?.userId;
 
-      console.log('🔍 Debug - Token:', token ? '✅' : '❌');
+      console.log('🔍 Debug - Token:', token ? '' : '');
       console.log('🔍 Debug - User ID:', userId);
 
       if (!token || !userId) {
         Alert.alert("Error", "No se encontró información de autenticación");
+        setLoading(false); 
         return;
       }
 
-      // Filtrar campos vacíos para no enviarlos
       const dataToUpdate = Object.entries(formData).reduce((acc, [key, value]) => {
-        if (value.trim() !== "") {
+        if (value && value.trim() !== "") {
           acc[key] = value.trim();
         }
         return acc;
       }, {});
 
-      console.log('🔍 Debug - Datos a actualizar:', dataToUpdate);
+      console.log('Debug - Datos a actualizar:', dataToUpdate);
 
       const updatedUser = await updateUserProfile(userId, dataToUpdate, token);
       
-      console.log('✅ Debug - Usuario actualizado:', updatedUser);
+      console.log('Debug - Usuario actualizado:', updatedUser);
+
+      Alert.alert("Éxito", "Perfil actualizado correctamente");
+
+      if (route.params?.onUpdate) {
+        console.log('🔄 Debug - Actualizando datos en pantalla anterior');
+        route.params.onUpdate(updatedUser);
+      }
       
-      Alert.alert(
-        "Éxito",
-        "Perfil actualizado correctamente",
-        [
-          {
-            text: "OK",
-            onPress: () => {
-              // Actualizar los datos en la pantalla anterior
-              if (route.params?.onUpdate) {
-                console.log('🔄 Debug - Actualizando datos en pantalla anterior');
-                route.params.onUpdate(updatedUser);
-              }
-              navigation.goBack();
-            }
-          }
-        ]
-      );
+      setTimeout(() => {
+        navigation.goBack();
+      }, 100);
+
     } catch (error) {
-      console.error("❌ Error updating profile:", error);
-      console.error("❌ Error details:", {
+      console.error(" Error updating profile:", error);
+      console.error(" Error details:", {
         message: error.message,
         response: error.response?.data,
         status: error.response?.status

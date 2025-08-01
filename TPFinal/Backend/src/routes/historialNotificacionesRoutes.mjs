@@ -13,17 +13,11 @@ router.get("/vecindario/:vecindarioId", historialController.obtenerHistorial);
 // Obtener historial filtrado por tipo
 router.get("/vecindario/:vecindarioId/tipo/:tipo", historialController.obtenerHistorialPorTipo);
 
-// Obtener estadísticas del historial
-router.get("/vecindario/:vecindarioId/estadisticas", historialController.obtenerEstadisticas);
-
 // Buscar notificaciones por texto
 router.get("/vecindario/:vecindarioId/buscar", historialController.buscarNotificaciones);
 
 // Obtener notificaciones recientes
 router.get("/vecindario/:vecindarioId/recientes", historialController.obtenerNotificacionesRecientes);
-
-// Limpiar historial de un vecindario
-router.delete("/vecindario/:vecindarioId", historialController.limpiarHistorial);
 
 // Agregar notificaciones de prueba
 router.post("/vecindario/:vecindarioId/prueba", historialController.agregarNotificacionesPrueba);

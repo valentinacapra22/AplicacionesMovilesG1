@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { io } from "../../init.mjs";
-import { agregarNotificacion } from "./historialNotificacionesService.mjs";
+import { agregarNotificacionesPrueba } from "./historialNotificacionesService.mjs";
 
 const prisma = new PrismaClient();
 

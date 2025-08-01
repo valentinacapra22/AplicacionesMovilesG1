@@ -1,303 +1,176 @@
-import { PrismaClient } from '@prisma/client';
+import prisma from '../db/prismaClient.mjs';
 
-const prisma = new PrismaClient();
-
-// Agregar notificación al historial de un vecindario
-export const agregarNotificacion = async (vecindarioId, notificacion) => {
-  try {
-    const notificacionCompleta = {
-      vecindarioId: parseInt(vecindarioId),
-      tipo: notificacion.tipo || 'info',
-      titulo: notificacion.titulo || null,
-      mensaje: notificacion.mensaje,
-      emisor: notificacion.emisor || 'Sistema',
-      metadata: notificacion.metadata || {}
-    };
-
-    const nuevaNotificacion = await prisma.historialNotificacion.create({
-      data: notificacionCompleta
-    });
-
-    console.log(`📝 Notificación agregada al historial del vecindario ${vecindarioId}`);
-    return nuevaNotificacion;
-  } catch (error) {
-    console.error('❌ Error agregando notificación al historial:', error);
-    throw error;
+/**
+ * Transforma un objeto de Alarma al formato de Historial
+ */
+const transformarAlarmaAHistorial = (alarma) => {
+  if (!alarma) {
+    return null;
   }
+  return {
+    alarmaId: alarma.alarmaId,
+    tipo: alarma.tipo,
+    descripcion: alarma.descripcion,
+    fechaHora: alarma.fechaHora,
+    activo: alarma.activo,
+    ubicaciones: alarma.ubicaciones,
+    usuario: alarma.usuario,
+    emisor: alarma.usuario ? `${alarma.usuario.nombre} ${alarma.usuario.apellido}` : 'Desconocido',
+  };
 };
 
-// Obtener historial de notificaciones de un vecindario
 export const obtenerHistorial = async (vecindarioId, limit = 50, offset = 0) => {
   try {
-    console.log(`🔍 Obteniendo historial para vecindario ${vecindarioId}`);
-    
-    const notificaciones = await prisma.historialNotificacion.findMany({
-      where: {
-        vecindarioId: parseInt(vecindarioId)
+    const alarmas = await prisma.alarma.findMany({
+      where: { usuario: { vecindarioId: parseInt(vecindarioId) } },
+      include: {
+        usuario: {
+          select: {
+            nombre: true,
+            apellido: true,
+            vecindarioId: true,
+          },
+        },
+        ubicaciones: true,
       },
-      orderBy: {
-        timestamp: 'desc'
-      },
+      orderBy: { fechaHora: 'desc' },
       take: limit,
       skip: offset,
-      include: {
-        vecindario: {
-          select: {
-            nombre: true
-          }
-        }
-      }
     });
-
-    console.log(`✅ Historial obtenido: ${notificaciones.length} notificaciones`);
-    return notificaciones;
+    return alarmas.map(transformarAlarmaAHistorial).filter(Boolean);
   } catch (error) {
-    console.error('❌ Error obteniendo historial:', error);
+    console.error('Error obteniendo historial desde alarmas:', error);
     throw error;
   }
 };
 
-// Obtener historial filtrado por tipo
+/**
+ * Obtiene el historial (basado en Alarmas) filtrado por tipo.
+ */
 export const obtenerHistorialPorTipo = async (vecindarioId, tipo, limit = 50) => {
   try {
-    const notificaciones = await prisma.historialNotificacion.findMany({
+    const alarmas = await prisma.alarma.findMany({
       where: {
-        vecindarioId: parseInt(vecindarioId),
-        tipo: tipo
+        tipo: tipo,
+        usuario: { vecindarioId: parseInt(vecindarioId) },
       },
-      orderBy: {
-        timestamp: 'desc'
-      },
-      take: limit,
       include: {
-        vecindario: {
+        usuario: {
           select: {
-            nombre: true
-          }
-        }
-      }
-    });
-
-    return notificaciones;
-  } catch (error) {
-    console.error('❌ Error obteniendo historial por tipo:', error);
-    throw error;
-  }
-};
-
-// Obtener estadísticas del historial
-export const obtenerEstadisticasHistorial = async (vecindarioId) => {
-  try {
-    const [total, porTipo, ultimaNotificacion] = await Promise.all([
-      // Total de notificaciones
-      prisma.historialNotificacion.count({
-        where: {
-          vecindarioId: parseInt(vecindarioId)
-        }
-      }),
-      
-      // Contar por tipo
-      prisma.historialNotificacion.groupBy({
-        by: ['tipo'],
-        where: {
-          vecindarioId: parseInt(vecindarioId)
+            nombre: true,
+            apellido: true,
+            vecindario: { select: { nombre: true } },
+          },
         },
-        _count: {
-          tipo: true
-        }
-      }),
-      
-      // Última notificación
-      prisma.historialNotificacion.findFirst({
-        where: {
-          vecindarioId: parseInt(vecindarioId)
-        },
-        orderBy: {
-          timestamp: 'desc'
-        }
-      })
-    ]);
-
-    // Procesar estadísticas por tipo
-    const estadisticasPorTipo = {};
-    porTipo.forEach(item => {
-      estadisticasPorTipo[item.tipo] = item._count.tipo;
-    });
-
-    // Obtener estadísticas por día (últimos 30 días)
-    const treintaDiasAtras = new Date();
-    treintaDiasAtras.setDate(treintaDiasAtras.getDate() - 30);
-
-    const notificacionesPorDia = await prisma.historialNotificacion.findMany({
-      where: {
-        vecindarioId: parseInt(vecindarioId),
-        timestamp: {
-          gte: treintaDiasAtras
-        }
       },
-      select: {
-        timestamp: true
-      }
+      orderBy: { fechaHora: 'desc' },
+      take: limit,
     });
-
-    const estadisticasPorDia = {};
-    notificacionesPorDia.forEach(notif => {
-      const fecha = new Date(notif.timestamp).toDateString();
-      estadisticasPorDia[fecha] = (estadisticasPorDia[fecha] || 0) + 1;
-    });
-
-    const estadisticas = {
-      total,
-      porTipo: estadisticasPorTipo,
-      porDia: estadisticasPorDia,
-      ultimaNotificacion
-    };
-
-    return estadisticas;
+    return alarmas.map(transformarAlarmaAHistorial).filter(Boolean);
   } catch (error) {
-    console.error('❌ Error obteniendo estadísticas del historial:', error);
+    console.error('Error obteniendo historial por tipo desde alarmas:', error);
     throw error;
   }
 };
 
-// Limpiar historial de un vecindario
-export const limpiarHistorial = async (vecindarioId) => {
+/**
+ * Obtiene las notificaciones más recientes (basado en Alarmas).
+ */
+export const obtenerNotificacionesRecientes = async (vecindarioId, limit = 10) => {
   try {
-    await prisma.historialNotificacion.deleteMany({
+    const alarmas = await prisma.alarma.findMany({
       where: {
-        vecindarioId: parseInt(vecindarioId)
-      }
+        usuario: { vecindarioId: parseInt(vecindarioId) },
+      },
+      include: {
+        usuario: {
+          select: {
+            nombre: true,
+            apellido: true,
+            vecindarioId: true,
+          },
+        },
+        ubicaciones: true,
+      },
+      orderBy: { fechaHora: 'desc' },
+      take: limit,
     });
-
-    console.log(`🗑️ Historial limpiado para el vecindario ${vecindarioId}`);
-    return { mensaje: 'Historial limpiado exitosamente' };
+    return alarmas.map(transformarAlarmaAHistorial).filter(Boolean);
   } catch (error) {
-    console.error('❌ Error limpiando historial:', error);
+    console.error('Error obteniendo notificaciones recientes desde alarmas:', error);
     throw error;
   }
 };
 
-// Buscar notificaciones por texto
+/**
+ * Busca notificaciones (alarmas) por un término de búsqueda.
+ */
 export const buscarNotificaciones = async (vecindarioId, texto, limit = 20) => {
   try {
-    const notificaciones = await prisma.historialNotificacion.findMany({
+    const alarmas = await prisma.alarma.findMany({
       where: {
-        vecindarioId: parseInt(vecindarioId),
+        usuario: {
+          vecindarioId: parseInt(vecindarioId),
+        },
         OR: [
+          { tipo: { contains: texto, mode: 'insensitive' } },
           {
-            mensaje: {
-              contains: texto,
-              mode: 'insensitive'
-            }
+            usuario: {
+              OR: [
+                { nombre: { contains: texto, mode: 'insensitive' } },
+                { apellido: { contains: texto, mode: 'insensitive' } },
+              ],
+            },
           },
-          {
-            titulo: {
-              contains: texto,
-              mode: 'insensitive'
-            }
+        ],
+      },
+      include: {
+        usuario: {
+          select: {
+            nombre: true,
+            apellido: true,
+            vecindario: { select: { nombre: true } },
           },
-          {
-            emisor: {
-              contains: texto,
-              mode: 'insensitive'
-            }
-          }
-        ]
+        },
       },
-      orderBy: {
-        timestamp: 'desc'
-      },
+      orderBy: { fechaHora: 'desc' },
       take: limit,
-      include: {
-        vecindario: {
-          select: {
-            nombre: true
-          }
-        }
-      }
     });
-
-    return notificaciones;
+    return alarmas.map(transformarAlarmaAHistorial).filter(Boolean);
   } catch (error) {
-    console.error('❌ Error buscando notificaciones:', error);
+    console.error('Error buscando notificaciones (alarmas):', error);
     throw error;
   }
 };
 
-// Obtener notificaciones recientes (últimas 24 horas)
-export const obtenerNotificacionesRecientes = async (vecindarioId, horas = 24) => {
-  try {
-    const tiempoLimite = new Date();
-    tiempoLimite.setHours(tiempoLimite.getHours() - horas);
-
-    const notificaciones = await prisma.historialNotificacion.findMany({
-      where: {
-        vecindarioId: parseInt(vecindarioId),
-        timestamp: {
-          gte: tiempoLimite
-        }
-      },
-      orderBy: {
-        timestamp: 'desc'
-      },
-      include: {
-        vecindario: {
-          select: {
-            nombre: true
-          }
-        }
-      }
-    });
-
-    return notificaciones;
-  } catch (error) {
-    console.error('❌ Error obteniendo notificaciones recientes:', error);
-    throw error;
-  }
-};
-
-// Función para agregar notificaciones de prueba
+/**
+ * Agrega alarmas de prueba para un vecindario.
+ */
 export const agregarNotificacionesPrueba = async (vecindarioId) => {
   try {
-    const notificacionesPrueba = [
-      {
-        tipo: 'alarma',
-        titulo: 'Alarma de Seguridad',
-        mensaje: 'Se detectó movimiento sospechoso en la entrada principal',
-        emisor: 'Sistema de Seguridad',
-        metadata: { ubicacion: 'Entrada Principal', nivel: 'alto' }
-      },
-      {
-        tipo: 'info',
-        titulo: 'Mantenimiento Programado',
-        mensaje: 'El próximo martes se realizará mantenimiento en el sistema de agua',
-        emisor: 'Administración',
-        metadata: { fecha: '2024-01-15', duracion: '2 horas' }
-      },
-      {
-        tipo: 'success',
-        titulo: 'Vecino Registrado',
-        mensaje: 'Bienvenido al vecindario! Tu cuenta ha sido activada exitosamente',
-        emisor: 'Sistema',
-        metadata: { accion: 'registro_exitoso' }
-      },
-      {
-        tipo: 'warning',
-        titulo: 'Corte de Energía',
-        mensaje: 'Se programó un corte de energía para mañana de 2:00 a 4:00 AM',
-        emisor: 'Servicios Públicos',
-        metadata: { inicio: '02:00', fin: '04:00', fecha: '2024-01-16' }
-      }
-    ];
+    const unUsuario = await prisma.usuario.findFirst({
+      where: { vecindarioId: parseInt(vecindarioId) },
+    });
 
-    for (const notif of notificacionesPrueba) {
-      await agregarNotificacion(vecindarioId, notif);
+    if (!unUsuario) {
+      console.log(`No se encontraron usuarios en el vecindario ${vecindarioId} para crear alarmas de prueba.`);
+      return;
     }
 
-    console.log(`✅ Notificaciones de prueba agregadas al vecindario ${vecindarioId}`);
-    return true;
+    const alarmasPrueba = [
+      { tipo: 'panico', usuarioId: unUsuario.usuarioId },
+      { tipo: 'incendio', usuarioId: unUsuario.usuarioId },
+      { tipo: 'medica', usuarioId: unUsuario.usuarioId },
+    ];
+
+    await prisma.alarma.createMany({
+      data: alarmasPrueba,
+      skipDuplicates: true,
+    });
+
+    console.log(`Alarmas de prueba agregadas al usuario ${unUsuario.usuarioId} del vecindario ${vecindarioId}`);
   } catch (error) {
-    console.error('❌ Error agregando notificaciones de prueba:', error);
+    console.error('Error agregando alarmas de prueba:', error);
     throw error;
   }
-}; 
+};

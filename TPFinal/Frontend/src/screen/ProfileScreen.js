@@ -1,10 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { 
-  View, Text, StyleSheet, ScrollView, ActivityIndicator, 
-  TouchableOpacity, Modal 
-} from "react-native";
+import {  View, Text, StyleSheet, ScrollView, ActivityIndicator,  TouchableOpacity, Modal } from "react-native";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 
@@ -70,10 +67,10 @@ export default function ProfileScreen({ navigation }) {
 
   const formatLabel = (label) => {
     return label
-      .replace(/_/g, " ") // Replace underscores with spaces
-      .replace(/calle1/i, "Calle 1") // Format 'calle1'
-      .replace(/calle2/i, "Calle 2") // Format 'calle2'
-      .replace(/\b\w/g, (char) => char.toUpperCase()); // Capitalize words
+      .replace(/_/g, " ") 
+      .replace(/calle1/i, "Calle 1") 
+      .replace(/calle2/i, "Calle 2") 
+      .replace(/\b\w/g, (char) => char.toUpperCase()); 
   };
 
   if (loading) {
@@ -107,12 +104,23 @@ export default function ProfileScreen({ navigation }) {
         </View>
       )}
 
-      {/* Logout Button */}
+      <TouchableOpacity 
+        style={styles.editButton} 
+        onPress={() => navigation.navigate("EditProfile", { 
+          userData: userData,
+          onUpdate: (updatedUser) => {
+            setUserData(updatedUser);
+            fetchUserData(); 
+          }
+        })}
+      >
+        <Text style={styles.editText}>Editar Perfil</Text>
+      </TouchableOpacity>
+
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Text style={styles.logoutText}>Cerrar Sesión</Text>
       </TouchableOpacity>
 
-      {/* Logout Confirmation Modal */}
       <Modal
         visible={isLogoutModalVisible}
         transparent={true}
@@ -162,6 +170,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   logoutText: { color: "white", fontSize: 20, textAlign: "center" },
+  editButton: {
+    marginTop: 20,
+    backgroundColor: "#0D99FF",
+    paddingHorizontal: 40,
+    paddingVertical: 12,
+    borderRadius: 25,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  editText: { color: "white", fontSize: 20, textAlign: "center" },
   modalOverlay: {
     flex: 1,
     justifyContent: "center",

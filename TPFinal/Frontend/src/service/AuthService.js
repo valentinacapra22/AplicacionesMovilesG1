@@ -38,4 +38,24 @@ const logout = () => {
   localStorage.removeItem('userData');
 };
 
-export { login, getToken, getUserData, logout };
+const updateUserProfile = async (userId, userData, token) => {
+  try {
+    const response = await axios.put(`${BASE_URL}/usuarios/${userId}`, userData, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    // Actualizar los datos del usuario en localStorage
+    const updatedUser = response.data;
+    localStorage.setItem('userData', JSON.stringify(updatedUser));
+
+    return updatedUser;
+  } catch (error) {
+    console.error("Error actualizando perfil:", error);
+    throw error;
+  }
+};
+
+export { login, getToken, getUserData, logout, updateUserProfile };
