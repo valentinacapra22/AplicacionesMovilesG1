@@ -1,4 +1,3 @@
-// src/controllers/authController.mjs
 import * as authService from "../services/authService.mjs";
 import catchAsync from "../helpers/catchAsync.mjs";
 

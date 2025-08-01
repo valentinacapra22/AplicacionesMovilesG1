@@ -1,5 +1,5 @@
 import axios from "axios";
-const BASE_URL = "http://localhost:3000/api/alarmas"; // Reemplaza con la URL de tu backend
+const BASE_URL = "http://localhost:3000/api/alarmas"; 
 
 export const setAlarma = async (alarmaData) => {
   const { data } = await axios.post(BASE_URL, alarmaData);

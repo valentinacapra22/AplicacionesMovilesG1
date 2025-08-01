@@ -1,6 +1,5 @@
 import axios from "axios";
-const BASE_URL = "http://192.168.1.43:3000/api"; // Reemplaza con la URL de tu backend
-
+const BASE_URL = "http://192.168.1.43:3000/api"; 
 export const setPais = async () => {
   const { data } = await axios.get(`${BASE_URL}/enumGeoNames/pais`);
   console.log(data);
