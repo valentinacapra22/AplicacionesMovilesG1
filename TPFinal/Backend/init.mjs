@@ -16,7 +16,6 @@ const io = new Server(server, {
 
 // Mapa para almacenar usuarios conectados por vecindario
 const usuariosPorVecindario = new Map();
-const connectedClients = new Map();
 
 const connectedClients = new Map(); 
 io.on('connection', (socket) => {
