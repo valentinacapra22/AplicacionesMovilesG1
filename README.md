@@ -17,7 +17,7 @@ En cuanto a la autenticación y conexión con backend, se integró Firebase medi
 
 La interfaz de usuario se complementa con @expo/vector-icons para íconos listos para usar, @react-native-picker/picker como selector desplegable y expo-status-bar para el control de la barra de estado. Finalmente, @babel/core se utilizó en el entorno de desarrollo para transpilar código moderno de JavaScript y garantizar compatibilidad con distintas plataformas.
 
-**INSTRUCCIONES PARA CORRER LA APLICACIÓN**
+**INSTRUCCIONES PARA CORRER LA APLICACIÓN DEL TP FINAL**
 1. Instalar Node.js
 2. Entrar a Backend e instalar las dependencias con npm install y luego ejecutar npx prisma generate
 4. Luego ir a Frontend instalar las dependecias y ejecutar npx expo install
@@ -28,4 +28,5 @@ Base de datos a incorporar en el archivo .env en la raiz de la carpeta Backend
 ```bash
 DATABASE_URL="postgresql://postgres:kYwSTQSRIMMRkvwJkKuaigQZgjnJriZN@switchback.proxy.rlwy.net:52691/railway"
 ```
+
 
