@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator, Platform, Dimensions,} from "react-native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from "../context/AuthContext";
 import { updateUserProfile } from "../service/AuthService";
 
@@ -56,7 +57,7 @@ export default function EditProfileScreen({ navigation, route }) {
       return false;
     }
 
-    // Validar formato de email
+   
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
       Alert.alert("Email Inválido", "Por favor ingresa un email válido");
@@ -71,11 +72,11 @@ export default function EditProfileScreen({ navigation, route }) {
 
     setLoading(true);
     try {
-      const token = localStorage.getItem("userToken") || authData?.token;
-      const userId = localStorage.getItem("userId") || authData?.userId;
+      const token = await AsyncStorage.getItem("userToken") || authData?.token;
+      const userId = await AsyncStorage.getItem("usuarioId") || authData?.userId;
 
-      console.log('🔍 Debug - Token:', token ? '' : '');
-      console.log('🔍 Debug - User ID:', userId);
+      console.log(' Debug - Token:', token ? '' : '');
+      console.log(' Debug - User ID:', userId);
 
       if (!token || !userId) {
         Alert.alert("Error", "No se encontró información de autenticación");
@@ -99,7 +100,7 @@ export default function EditProfileScreen({ navigation, route }) {
       Alert.alert("Éxito", "Perfil actualizado correctamente");
 
       if (route.params?.onUpdate) {
-        console.log('🔄 Debug - Actualizando datos en pantalla anterior');
+        console.log(' Debug - Actualizando datos en pantalla anterior');
         route.params.onUpdate(updatedUser);
       }
       

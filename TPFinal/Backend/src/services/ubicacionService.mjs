@@ -4,11 +4,13 @@ const prisma = new PrismaClient();
 
 export const saveUserLocation = async (usuarioId, alarmaId, latitud, longitud) => {
   try {
+   
     const usuarioIdInt = parseInt(usuarioId, 10);
 
     if (isNaN(usuarioIdInt)) {
       throw new Error("Invalid user ID");
     }
+
     const nuevaUbicacion = await prisma.ubicacion.create({
       data: {
         usuarioId: usuarioIdInt, 

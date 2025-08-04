@@ -1,10 +1,9 @@
 import { PrismaClient } from "@prisma/client";
 import { io } from "../../init.mjs";
-import { agregarNotificacionesPrueba } from "./historialNotificacionesService.mjs";
 
 const prisma = new PrismaClient();
 
-// Obtener usuario por ID
+
 export const getUsuarioById = async (usuarioId) => {
     return await prisma.usuario.findUnique({
         where: { usuarioId: parseInt(usuarioId) },
@@ -17,7 +16,7 @@ export const getUsuarioById = async (usuarioId) => {
     });
 };
 
-// Activar una alarma y notificar a los usuarios del mismo vecindario
+
 export const activarAlarma = async (usuarioId, descripcion, tipo) => {
     const usuario = await prisma.usuario.findUnique({
         where: { usuarioId: usuarioId },
@@ -43,6 +42,7 @@ export const activarAlarma = async (usuarioId, descripcion, tipo) => {
     return { alarma, usuariosDelVecindario };
 };
 
+
 export const getAllAlarmas = async () => {
     return await prisma.alarma.findMany({
         include: { 
@@ -58,6 +58,7 @@ export const getAllAlarmasByVecindario = async (vecindarioId) => {
         include: { usuario: true },
     });
 }
+
 
 export const getAlarmaById = async (id) => {
     const alarmaId = parseInt(id);
@@ -76,7 +77,7 @@ export const createAlarma = async (data) => {
         throw new Error("Todos los campos (tipo, usuarioId) son obligatorios");
     }
 
-    // Crear la alarma (sin el campo descripcion ya que no existe en la BD)
+ 
     const alarma = await prisma.alarma.create({
         data: {
             activo: activo !== undefined ? activo : true,
@@ -93,7 +94,7 @@ export const createAlarma = async (data) => {
         }
     });
 
-    // Enviar notificación por socket y guardar en base de datos
+  
     if (alarma.usuario && alarma.usuario.vecindarioId) {
         const notificacion = {
             mensaje: descripcion || `¡Alarma de ${tipo} activada en tu vecindario!`,
@@ -109,24 +110,15 @@ export const createAlarma = async (data) => {
             }
         };
 
-        // Enviar UNA SOLA notificación a todos los usuarios del vecindario
-        // Usar emit en lugar de to().emit() para asegurar que se envíe solo una vez
+        
         io.to(`vecindario_${alarma.usuario.vecindarioId}`).emit('nuevaAlarma', notificacion);
         
-        // Guardar en base de datos para el historial
-        try {
-            await agregarNotificacion(alarma.usuario.vecindarioId, notificacion);
-            console.log(`📝 Notificación guardada en base de datos para vecindario ${alarma.usuario.vecindarioId}`);
-        } catch (error) {
-            console.error('❌ Error guardando notificación en base de datos:', error);
-            // No fallar si la base de datos no está disponible
-        }
-        
-        console.log(`📢 Alarma enviada al vecindario ${alarma.usuario.vecindarioId}: ${tipo}`);
+        console.log(` Alarma enviada al vecindario ${alarma.usuario.vecindarioId}: ${tipo}`);
     }
 
     return alarma;
 };
+
 
 export const updateAlarma = async (id, data) => {
     const alarmaId = parseInt(id);
@@ -155,7 +147,7 @@ export const deleteAlarma = async (id) => {
 
 export const getEstadisticasPorVecindario = async (vecindarioId) => {
   try {
-    // Obtener todas las alarmas del vecindario con información del usuario
+   
     const alarmas = await prisma.alarma.findMany({
       where: {
         usuario: {
@@ -172,19 +164,19 @@ export const getEstadisticasPorVecindario = async (vecindarioId) => {
       }
     });
 
-    // Contar alarmas por tipo
+    
     const estadisticasPorTipo = {};
     const alarmasPorMes = {};
     const alarmasPorUsuario = {};
 
     alarmas.forEach(alarma => {
-      // Estadísticas por tipo
+   
       if (!estadisticasPorTipo[alarma.tipo]) {
         estadisticasPorTipo[alarma.tipo] = 0;
       }
       estadisticasPorTipo[alarma.tipo]++;
 
-      // Estadísticas por mes
+    
       const fecha = new Date(alarma.fechaHora);
       const mesAnio = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
       if (!alarmasPorMes[mesAnio]) {
@@ -192,7 +184,6 @@ export const getEstadisticasPorVecindario = async (vecindarioId) => {
       }
       alarmasPorMes[mesAnio]++;
 
-      // Estadísticas por usuario
       const nombreUsuario = `${alarma.usuario.nombre} ${alarma.usuario.apellido}`;
       if (!alarmasPorUsuario[nombreUsuario]) {
         alarmasPorUsuario[nombreUsuario] = 0;
@@ -200,7 +191,7 @@ export const getEstadisticasPorVecindario = async (vecindarioId) => {
       alarmasPorUsuario[nombreUsuario]++;
     });
 
-    // Convertir a arrays para los gráficos
+    
     const datosPorTipo = Object.entries(estadisticasPorTipo).map(([tipo, cantidad]) => ({
       tipo,
       cantidad
@@ -215,7 +206,7 @@ export const getEstadisticasPorVecindario = async (vecindarioId) => {
 
     const datosPorUsuario = Object.entries(alarmasPorUsuario)
       .sort(([, a], [, b]) => b - a)
-      .slice(0, 10) // Top 10 usuarios
+      .slice(0, 10) 
       .map(([usuario, cantidad]) => ({
         usuario,
         cantidad

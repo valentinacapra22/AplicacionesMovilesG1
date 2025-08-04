@@ -22,16 +22,22 @@ export const getUsuarioByEmail = async (email) => {
 };
 
 export const createUsuario = async (data) => {
+   
     registerSchema.parse(data);
 
     const { nombre, email, apellido, contrasena, direccion, telefono, vecindarioId, calle1, calle2, depto, piso } = data;
+
+
+    
     const existingUser = await prisma.usuario.findUnique({ where: { email } });
     if (existingUser) {
         throw new Error('El email ya está en uso');
     }
 
+    
     const hashedPassword = await bcrypt.hash(contrasena, 10);
 
+    
     return await prisma.usuario.create({
         data: {
             nombre,
@@ -50,6 +56,7 @@ export const createUsuario = async (data) => {
 };
 
 export const updateUsuario = async (id, data) => {
+    
     registerSchema.partial().parse(data);  
 
     if (data.contrasena) {

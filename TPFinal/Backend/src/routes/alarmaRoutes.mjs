@@ -4,10 +4,10 @@ import { authenticateToken } from "../middleware/authMiddleware.mjs";
 
 const router = express.Router();
 
-// Ruta para estadísticas por vecindario (debe ir antes de /:id)
+
 router.get("/estadisticas/:vecindarioId", alarmaController.getEstadisticasVecindario);
 
-// Ruta para activar alarma (requiere autenticación)
+
 router.post("/activar", authenticateToken, alarmaController.activarAlarma);
 
 router

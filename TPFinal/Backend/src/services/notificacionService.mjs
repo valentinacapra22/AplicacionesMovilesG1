@@ -16,11 +16,12 @@ export const getNotificacionById = async (id) => {
 export const createNotificacion = async (data) => {
     const { titulo, notificacion, contenido, tipo, usuarioId } = data;
 
+    
     if (!titulo || !notificacion || !contenido || !tipo || !usuarioId) {
         throw new Error('Todos los campos (titulo, notificacion, contenido, tipo, fechaHora, usuarioId) son obligatorios');
     }
 
-    // Obtener información del usuario para el vecindario
+    
     const usuario = await prisma.usuario.findUnique({
         where: { usuarioId: parseInt(usuarioId) },
         select: { vecindarioId: true, nombre: true, apellido: true }
@@ -30,7 +31,7 @@ export const createNotificacion = async (data) => {
         throw new Error('Usuario no encontrado');
     }
 
-    // Crear la notificación
+    
     const nuevaNotificacion = await prisma.notificacion.create({
         data: {
             titulo,
@@ -46,7 +47,7 @@ export const createNotificacion = async (data) => {
         }
     });
 
-    // SOLO enviar notificación por socket si NO es una alarma (las alarmas se manejan en alarmaController)
+    
     if (tipo !== 'alarma') {
         const notificacionSocket = {
             mensaje: contenido,
@@ -57,10 +58,10 @@ export const createNotificacion = async (data) => {
             titulo: titulo
         };
 
-        // Enviar a todos los usuarios del vecindario
+        
         io.to(`vecindario_${usuario.vecindarioId}`).emit('notificacion', notificacionSocket);
         
-        console.log(`📢 Notificación enviada al vecindario ${usuario.vecindarioId}: ${titulo}`);
+        console.log(` Notificación enviada al vecindario ${usuario.vecindarioId}: ${titulo}`);
     }
 
     return nuevaNotificacion;

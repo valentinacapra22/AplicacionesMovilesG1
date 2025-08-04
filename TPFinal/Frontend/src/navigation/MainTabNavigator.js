@@ -11,7 +11,6 @@ import { THEME } from "../theme/theme";
 const Tab = createBottomTabNavigator();
 const ProfileStack = createStackNavigator();
 
-// Stack para el perfil que incluye la pantalla de edición
 function ProfileStackNavigator() {
   return (
     <ProfileStack.Navigator

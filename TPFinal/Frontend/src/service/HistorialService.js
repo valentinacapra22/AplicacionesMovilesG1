@@ -1,16 +1,14 @@
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import BASE_URL from '../config/apiConfig';
 
-const BASE_URL = "http://localhost:3000/api";
-
-// Configurar axios con interceptor para el token
 const api = axios.create({
   baseURL: BASE_URL,
   timeout: 10000,
 });
 
-// Interceptor para agregar token de autenticación
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("userToken");
+api.interceptors.request.use(async (config) => {
+  const token = await AsyncStorage.getItem("userToken");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -18,7 +16,6 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Interceptor para respuestas
 api.interceptors.response.use(
   (response) => {
     console.log('Response:', response.data);
@@ -30,7 +27,6 @@ api.interceptors.response.use(
   }
 );
 
-// Obtener historial de notificaciones de un vecindario
 export const obtenerHistorial = async (vecindarioId, limit = 50, offset = 0) => {
   try {
     console.log('Llamando a obtenerHistorial con vecindarioId:', vecindarioId);
@@ -45,7 +41,7 @@ export const obtenerHistorial = async (vecindarioId, limit = 50, offset = 0) => 
   }
 };
 
-// Obtener historial filtrado por tipo
+
 export const obtenerHistorialPorTipo = async (vecindarioId, tipo, limit = 50) => {
   try {
     const response = await api.get(`/historial/vecindario/${vecindarioId}/tipo/${tipo}`, {
@@ -58,7 +54,7 @@ export const obtenerHistorialPorTipo = async (vecindarioId, tipo, limit = 50) =>
   }
 };
 
-// Obtener estadísticas del historial
+
 export const obtenerEstadisticas = async (vecindarioId) => {
   try {
     const response = await api.get(`/historial/vecindario/${vecindarioId}/estadisticas`);
@@ -69,7 +65,7 @@ export const obtenerEstadisticas = async (vecindarioId) => {
   }
 };
 
-// Buscar notificaciones por texto
+
 export const buscarNotificaciones = async (vecindarioId, query, limit = 20) => {
   try {
     const response = await api.get(`/historial/vecindario/${vecindarioId}/buscar`, {
@@ -82,7 +78,7 @@ export const buscarNotificaciones = async (vecindarioId, query, limit = 20) => {
   }
 };
 
-// Obtener notificaciones recientes
+
 export const obtenerNotificacionesRecientes = async (vecindarioId, horas = 24) => {
   try {
     const response = await api.get(`/historial/vecindario/${vecindarioId}/recientes`, {
@@ -95,7 +91,7 @@ export const obtenerNotificacionesRecientes = async (vecindarioId, horas = 24) =
   }
 };
 
-// Limpiar historial de un vecindario
+
 export const limpiarHistorial = async (vecindarioId) => {
   try {
     const response = await api.delete(`/historial/vecindario/${vecindarioId}`);
@@ -106,7 +102,7 @@ export const limpiarHistorial = async (vecindarioId) => {
   }
 };
 
-// Función helper para formatear fecha
+
 export const formatearFecha = (timestamp) => {
   const fecha = new Date(timestamp);
   const ahora = new Date();
@@ -145,7 +141,7 @@ export const obtenerIcono = (tipo) => {
   }
 };
 
-// Función helper para obtener color según tipo
+
 export const obtenerColor = (tipo) => {
   switch (tipo) {
     case 'alarma':

@@ -14,77 +14,76 @@ import axios from "axios";
 import { connectSocket } from "../utils/socket";
 import { useAuth } from "../context/AuthContext";
 import * as Location from 'expo-location';
-
-const BASE_URL = "http://localhost:3000/api";
-const VERIFY_TOKEN_API = `${BASE_URL}/auth/validate-token`;
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import BASE_URL, { USER_API } from "../config/apiConfig"; 
 
 export default function AlertScreen() {
-  const { showNotification } = useNotification();
   const [userData, setUserData] = useState(null);
   const { authData } = useAuth();
   const [location, setLocation] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const token = localStorage.getItem("userToken") || authData.token;
-        console.log('Token:', token);
-        const userId = localStorage.getItem("userId");
 
+  let showNotification;
+  try {
+    const notificationContext = useNotification();
+    showNotification = notificationContext.showNotification;
+  } catch (error) {
+    console.log("NotificationContext no disponible, usando función por defecto");
+    showNotification = (title, message, type = 'info') => {
+      Alert.alert(title, message);
+    };
+  }
+
+ 
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        const token = await AsyncStorage.getItem("userToken") || authData.token;
         if (!token) {
           Alert.alert("Error", "No hay token de autenticación");
           return;
         }
-        
-        if (!userId) {
-          const { data: verifyData } = await axios.post(VERIFY_TOKEN_API, { token });
-          const userId = verifyData.usuarioId.toString();
-          localStorage.setItem("userId", userId);
-        }
 
         axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-        const { data: user } = await axios.get(`${BASE_URL}/usuarios/${userId}`);
+        const { data: user } = await axios.get(`${USER_API}/me`);
         setUserData(user);
-
-        // Conectar al socket SOLO UNA VEZ con el ID del vecindario
-        if (user.vecindarioId && !isConnected) {
-          connectSocket(userId, user.vecindarioId);
-          setIsConnected(true);
-          console.log(`Conectado al vecindario ${user.vecindarioId}`);
+        
+        if (user.usuarioId) {
+            await AsyncStorage.setItem("usuarioId", user.usuarioId.toString());
         }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-        Alert.alert("Error", "No se pudo cargar la información del usuario");
-      }
-    };
+        
+        if (user.vecindarioId && !isConnected) {
+          connectSocket(user.usuarioId, user.vecindarioId);
+          setIsConnected(true);
+          console.log(`🔌 Conectado al vecindario ${user.vecindarioId}`);
+        }
 
-    fetchUserData();
-  }, []);
+        console.log(` Usuario cargado: ${user.nombre} ${user.apellido}`);
 
-  useEffect(() => {
-    const requestLocationPermission = async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert("Permiso Denegado", "Necesitamos tu ubicación para proceder.");
-        return;
-      }
-
-      try {
-        const currentLocation = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.High,
-        });
+        let { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert("Permiso Denegado", "Necesitamos tu ubicación para proceder.");
+          return;
+        }
+        const currentLocation = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
         setLocation(currentLocation.coords);
         console.log(' Ubicación obtenida:', currentLocation.coords);
+
       } catch (error) {
-        console.error('Error obteniendo ubicación:', error);
-        Alert.alert("Error", "No se pudo obtener la ubicación");
+        if (axios.isAxiosError(error) && error.response?.status === 404) {
+            console.error("Error 404: El endpoint /me no fue encontrado o el usuario no existe en la BD.");
+        } else {
+            console.error("Error fetching initial data:", error);
+        }
+        Alert.alert("Error", "No se pudo cargar tu información. Intenta reiniciar la app.");
       }
     };
 
-    requestLocationPermission();
-  }, []);
+    fetchInitialData();
+  }, [authData.token]);
+
 
   const handleEmergencyCall = () => {
     Linking.openURL("tel:911").catch(() => {
@@ -99,48 +98,56 @@ export default function AlertScreen() {
     }
 
     if (!location) {
-      Alert.alert("Error", "No se pudo obtener la ubicación");
+      Alert.alert("Error", "No se pudo obtener tu ubicación. Por favor, asegúrate de tener los permisos activados.");
       return;
     }
 
     setIsLoading(true);
-
     try {
-      const userId = localStorage.getItem("userId");
+        const userId = await AsyncStorage.getItem("usuarioId");
+        if (!userId) {
+            Alert.alert("Error", "No se pudo identificar al usuario.");
+            setIsLoading(false);
+            return;
+        }
       const emisor = `${userData.nombre} ${userData.apellido}`;
 
-      // Crear la alarma en la base de datos (esto enviará la notificación automáticamente)
-      const alarmaResponse = await axios.post(`${BASE_URL}/alarmas`, {
-        tipo: alertType.label,
-        descripcion: `Alarma de ${alertType.label} activada por ${emisor}`,
+      console.log(' Enviando alarma a /alarmas/activar:', {
+        tipo: alertType,
         usuarioId: userId,
+        vecindarioId: userData.vecindarioId,
+        emisor: emisor,
+        latitud: location.latitude,
+        longitud: location.longitude
       });
 
-      const alarmaId = alarmaResponse.data.alarmaId;
-
-      // Guardar la ubicación
-      const ubicacionResponse = await axios.post(`${BASE_URL}/ubicaciones`, {
+      const alarmaResponse = await axios.post(`${BASE_URL}/alarmas/activar`, {
+        tipo: alertType,
+        descripcion: `Alarma de ${alertType} activada por ${emisor}`,
         usuarioId: userId,
-        alarmaId,
         latitud: location.latitude,
         longitud: location.longitude,
       });
 
-      console.log(' Alarma y ubicación guardadas:', {
-        alarma: alarmaResponse.data,
-        ubicacion: ubicacionResponse.data
-      });
+      console.log('Alarma activada:', alarmaResponse.data);
 
-      // Mostrar notificación local de confirmación
       showNotification(
-        ` Alarma de ${alertType.label}`,
+        ` Alarma de ${alertType}`,
         `Alarma activada exitosamente en tu vecindario`,
         'success'
       );
+      
+      Alert.alert(
+        "Alarma Enviada", 
+        `La alarma de ${alertType} ha sido enviada exitosamente a tu vecindario.`,
+        [{ text: "OK" }]
+      );
 
     } catch (error) {
-      console.error(' Error activando alarma:', error);
-      Alert.alert("Error", "No se pudo activar la alarma. Intenta nuevamente.");
+        
+        const errorMessage = error.response ? JSON.stringify(error.response.data) : error.message;
+        console.error('Error activando alarma:', errorMessage);
+        Alert.alert("Error", "No se pudo activar la alarma. Intenta nuevamente.");
     } finally {
       setIsLoading(false);
     }
@@ -164,7 +171,7 @@ export default function AlertScreen() {
               { backgroundColor: alert.color },
               isLoading && styles.alertButtonDisabled
             ]}
-            onPress={() => handleAlertPress(alert)}
+            onPress={() => handleAlertPress(alert.label)}
             disabled={isLoading}
           >
             <Ionicons name={alert.icon} size={40} color="white" />
@@ -191,7 +198,7 @@ export default function AlertScreen() {
       {!location && (
         <View style={styles.locationWarning}>
           <Text style={styles.locationWarningText}>
-            Obteniendo ubicación...
+             Obteniendo ubicación... Asegúrate de tener los permisos activados.
           </Text>
         </View>
       )}
@@ -212,7 +219,7 @@ const alertTypes = [
 
 const styles = StyleSheet.create({
   container: { 
-    flex: 1, 
+    flexGrow: 1, 
     alignItems: "center", 
     padding: 16,
     backgroundColor: '#f8f9fa'
@@ -245,9 +252,14 @@ const styles = StyleSheet.create({
     height: 115,
     alignItems: "center",
     justifyContent: "center",
-    margin: 4,
-    borderRadius: 30,
+    margin: 8,
+    borderRadius: 20,
     position: 'relative',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.30,
+    shadowRadius: 4.65,
+    elevation: 8,
   },
   alertButtonDisabled: {
     opacity: 0.6,
@@ -266,7 +278,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: 'rgba(0,0,0,0.5)',
-    borderRadius: 30,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },

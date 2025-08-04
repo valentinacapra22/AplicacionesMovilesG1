@@ -7,11 +7,13 @@ const prismaClient = new prisma();
 
 const cargarPaises = async () => {
   try {
+    
     const { data } = await get(
       `http://api.geonames.org/searchJSON?q=Argentina&featureClass=A&featureCode=PCLI&username=${API_USERNAME}`,
     );
     const paises = data.geonames;
 
+    
     for (const pais of paises) {
       const paisExistente = await prismaClient.pais.findUnique({
         where: { paisId: pais.geonameId },
@@ -38,11 +40,13 @@ const cargarPaises = async () => {
 
 const cargarProvincias = async (paisGeonameId) => {
   try {
+    
     const { data } = await get(
       `http://api.geonames.org/childrenJSON?geonameId=${paisGeonameId}&username=${API_USERNAME}`,
     );
     const provincias = data.geonames;
 
+   
     for (const provincia of provincias) {
       const provinciaExistente = await prismaClient.provincia.findUnique({
         where: { provinciaId: provincia.geonameId },
@@ -76,17 +80,20 @@ const cargarProvincias = async (paisGeonameId) => {
 
 const cargarLocalidades = async (provinciaGeonameId) => {
   try {
+    
     const { data } = await get(
       `http://api.geonames.org/childrenJSON?geonameId=${provinciaGeonameId}&username=${API_USERNAME}`,
     );
     const localidades = data.geonames;
 
+   
     for (const localidad of localidades) {
       const provincia = await prismaClient.provincia.findFirst({
         where: { provinciaId: provinciaGeonameId },
       });
 
       if (provincia) {
+        
         const localidadExistente = await prismaClient.localidad.findFirst({
           where: {
             localidadId: localidad.geonameId,
@@ -114,16 +121,24 @@ const cargarLocalidades = async (provinciaGeonameId) => {
   }
 };
 
+
 export const cargarEnumerativa = async () => {
   try {
+    
     await cargarPaises();
+
+    
     const paises = await prismaClient.pais.findMany();
     for (const pais of paises) {
+      
       await cargarProvincias(pais.paisId);
+
+      
       const provincias = await prismaClient.provincia.findMany({
         where: { paisId: pais.id },
       });
       for (const provincia of provincias) {
+        
         await cargarLocalidades(provincia.provinciaId);
       }
     }

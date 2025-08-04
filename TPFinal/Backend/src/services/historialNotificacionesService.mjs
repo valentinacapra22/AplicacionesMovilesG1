@@ -1,8 +1,6 @@
 import prisma from '../db/prismaClient.mjs';
 
-/**
- * Transforma un objeto de Alarma al formato de Historial
- */
+
 const transformarAlarmaAHistorial = (alarma) => {
   if (!alarma) {
     return null;
@@ -44,9 +42,7 @@ export const obtenerHistorial = async (vecindarioId, limit = 50, offset = 0) => 
   }
 };
 
-/**
- * Obtiene el historial (basado en Alarmas) filtrado por tipo.
- */
+
 export const obtenerHistorialPorTipo = async (vecindarioId, tipo, limit = 50) => {
   try {
     const alarmas = await prisma.alarma.findMany({
@@ -73,9 +69,7 @@ export const obtenerHistorialPorTipo = async (vecindarioId, tipo, limit = 50) =>
   }
 };
 
-/**
- * Obtiene las notificaciones más recientes (basado en Alarmas).
- */
+
 export const obtenerNotificacionesRecientes = async (vecindarioId, limit = 10) => {
   try {
     const alarmas = await prisma.alarma.findMany({
@@ -102,9 +96,6 @@ export const obtenerNotificacionesRecientes = async (vecindarioId, limit = 10) =
   }
 };
 
-/**
- * Busca notificaciones (alarmas) por un término de búsqueda.
- */
 export const buscarNotificaciones = async (vecindarioId, texto, limit = 20) => {
   try {
     const alarmas = await prisma.alarma.findMany({
@@ -143,9 +134,6 @@ export const buscarNotificaciones = async (vecindarioId, texto, limit = 20) => {
   }
 };
 
-/**
- * Agrega alarmas de prueba para un vecindario.
- */
 export const agregarNotificacionesPrueba = async (vecindarioId) => {
   try {
     const unUsuario = await prisma.usuario.findFirst({

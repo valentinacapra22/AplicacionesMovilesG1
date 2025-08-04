@@ -10,7 +10,7 @@ export const activarAlarma = catchAsync(async (req, res) => {
   }
 
   try {
-    // Usar el servicio createAlarma que ya maneja las notificaciones
+    
     const alarma = await alarmaService.createAlarma({
       tipo,
       descripcion,

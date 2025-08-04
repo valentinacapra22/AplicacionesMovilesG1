@@ -15,9 +15,12 @@ export const getVecindarioById = async (id) => {
 export const createVecindario = async (data) => {
 	const { nombre, ciudad, ubicacion } = data;
 
+
 	if (!nombre || !ciudad || !ubicacion) {
 		throw new Error('Todos los campos (nombre, ciudad, ubicacion) son obligatorios');
 	}
+
+	
 	return await prisma.vecindario.create({
 		data: {
 			nombre,
