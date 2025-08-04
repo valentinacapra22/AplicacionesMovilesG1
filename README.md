@@ -11,7 +11,7 @@ Esta aplicación de productividad permite a los usuarios gestionar sus tareas de
 
 
 **LIBRERÍAS UTILIZADAS:**
-Este proyecto fue desarrollado con Expo SDK 53 y utiliza diversas librerías para facilitar el desarrollo de la aplicación. En el núcleo del proyecto se encuentran React 19.0.0, React Native 0.79.2 y Expo ~53.0.9, que proporcionan la base para construir interfaces móviles eficientes. Para la navegación entre pantallas se emplearon @react-navigation/native, @react-navigation/stack, react-native-screens y react-native-safe-area-context, mejorando el rendimiento y adaptabilidad a diferentes dispositivos.
+Este proyecto fue desarrollado con Expo SDK 53 y utiliza diversas librerías para facilitar el desarrollo de la aplicación. En el núcleo del proyecto se encuentran React 19.0.0, React Native 0.79.2 y Expo ~53.0.0, que proporcionan la base para construir interfaces móviles eficientes. Para la navegación entre pantallas se emplearon @react-navigation/native, @react-navigation/stack, react-native-screens y react-native-safe-area-context, mejorando el rendimiento y adaptabilidad a diferentes dispositivos.
 
 En cuanto a la autenticación y conexión con backend, se integró Firebase mediante @react-native-firebase/app y @react-native-firebase/auth, permitiendo gestionar usuarios de forma segura. Para el almacenamiento local se utilizó @react-native-async-storage/async-storage, que permite guardar datos de manera persistente en el dispositivo.
 
@@ -19,11 +19,13 @@ La interfaz de usuario se complementa con @expo/vector-icons para íconos listos
 
 **INSTRUCCIONES PARA CORRER LA APLICACIÓN**
 1. Instalar Node.js
-2. Descargar las dependencias con npm install.
-3. Correr el comando npx expo start para iniciar el servidor de desarrollo.
-4. Tener descargado en el celular la aplicación Expo Go necesaria para escanear el QR y probar la aplicación.
+2. Entrar a Backend e instalar las dependencias con npm install y luego ejecutar npx prisma generate
+4. Luego ir a Frontend instalar las dependecias y ejecutar npx expo install
+5. Correr el comando npx expo start para iniciar el servidor de desarrollo.
+6. Tener descargado en el celular la aplicación Expo Go necesaria para escanear el QR y probar la aplicación.
 
-Base de datos a incorporar en el archivo .env en la raiz del proyecto
+Base de datos a incorporar en el archivo .env en la raiz de la carpeta Backend
 ```bash
 DATABASE_URL="postgresql://postgres:kYwSTQSRIMMRkvwJkKuaigQZgjnJriZN@switchback.proxy.rlwy.net:52691/railway"
 ```
+
